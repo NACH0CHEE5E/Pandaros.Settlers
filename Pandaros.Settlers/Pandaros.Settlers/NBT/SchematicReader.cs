@@ -1,14 +1,12 @@
-﻿using BlockTypes;
-using fNbt;
+﻿using fNbt;
 using Newtonsoft.Json;
+using Pandaros.API;
 using Pipliz;
 using Pipliz.JSON;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Pandaros.Settlers.NBT
 {
@@ -21,7 +19,7 @@ namespace Pandaros.Settlers.NBT
         {
             try
             {
-                if (TryGetScematicFilePath(name + METADATA_FILEEXT, colonyId, out string savePath))
+                if (TryGetScematicMetadataFilePath(name + METADATA_FILEEXT, out string savePath))
                 {
                     var json = JSON.Deserialize(savePath);
                     metadata = JsonConvert.DeserializeObject<SchematicMetadata>(json.ToString());
@@ -34,7 +32,7 @@ namespace Pandaros.Settlers.NBT
             catch (Exception ex)
             {
                 metadata = null;
-                PandaLogger.LogError(ex, "error getting metadata for schematic {0}", name);
+                SettlersLogger.LogError(ex, "error getting metadata for schematic {0}", name);
             }
 
             return metadata != null;
@@ -58,6 +56,21 @@ namespace Pandaros.Settlers.NBT
                 size = null;
 
             return size != null;
+        }
+
+        public static bool TryGetScematicMetadataFilePath(string name, out string colonySaves)
+        {
+            colonySaves = GameLoader.Schematic_SAVE_LOC;
+
+            if (!Directory.Exists(colonySaves))
+                Directory.CreateDirectory(colonySaves);
+
+            if (File.Exists(colonySaves + name))
+                colonySaves = colonySaves + name;
+            else
+                colonySaves = null;
+
+            return !string.IsNullOrWhiteSpace(colonySaves);
         }
 
         public static bool TryGetScematicFilePath(string name, int colonyId, out string colonySaves)
@@ -95,6 +108,54 @@ namespace Pandaros.Settlers.NBT
             return options.OrderBy(f => f.Name).ToList();
         }
 
+        public static void SaveSchematic(Colony colony, Schematic schematic)
+        {
+            var colonySaves = GameLoader.Schematic_SAVE_LOC + $"\\{colony.ColonyID}\\";
+
+            if (!Directory.Exists(colonySaves))
+                Directory.CreateDirectory(colonySaves);
+
+            List<NbtTag> tags = new List<NbtTag>();
+
+            tags.Add(new NbtInt("Width", schematic.XMax));
+            tags.Add(new NbtInt("Height", schematic.YMax));
+            tags.Add(new NbtInt("Length", schematic.ZMax));
+
+            List<NbtTag> blocks = new List<NbtTag>();
+
+            for (int Y = 0; Y <= schematic.YMax; Y++)
+            {
+                for (int Z = 0; Z <= schematic.ZMax; Z++)
+                {
+                    for (int X = 0; X <= schematic.XMax; X++)
+                    {
+                        NbtCompound compTag = new NbtCompound();
+                        compTag.Add(new NbtInt("x", X));
+                        compTag.Add(new NbtInt("y", Y));
+                        compTag.Add(new NbtInt("z", Z));
+                        compTag.Add(new NbtString("id", schematic.Blocks[X,Y,Z].BlockID));
+                        blocks.Add(compTag);
+                    }
+                }
+            }
+
+            NbtList nbtList = new NbtList("CSBlocks", blocks);
+            tags.Add(nbtList);
+
+            NbtFile nbtFile = new NbtFile(new NbtCompound("CompoundTag", tags));
+            var fileSave = Path.Combine(colonySaves, schematic.Name + ".schematic");
+            var metaDataSave = Path.Combine(GameLoader.Schematic_SAVE_LOC, schematic.Name + ".schematic.metadata.json");
+
+            if (File.Exists(fileSave))
+                File.Delete(fileSave);
+
+            if (File.Exists(metaDataSave))
+                File.Delete(metaDataSave);
+
+            GenerateMetaData(metaDataSave, schematic.Name, schematic);
+            nbtFile.SaveToFile(fileSave, NbtCompression.GZip);
+        }
+
         public static Schematic LoadSchematic(string path, Vector3Int startPos)
         {
             NbtFile file = new NbtFile(path);
@@ -105,55 +166,76 @@ namespace Pandaros.Settlers.NBT
         {
             if (TryGetScematicFilePath(name, colonyId, out string path))
             {
-                var metadataPath = path + METADATA_FILEEXT;
-                var metadata = new SchematicMetadata();
-                metadata.Name = name.Substring(0, name.LastIndexOf('.'));
+                var colonySaves = GameLoader.Schematic_SAVE_LOC + $"\\{colonyId}\\";
+
+                if (!Directory.Exists(colonySaves))
+                    Directory.CreateDirectory(colonySaves);
+
+                var metadataPath = Path.Combine(GameLoader.Schematic_SAVE_LOC, name + METADATA_FILEEXT);
                 Schematic schematic = LoadSchematic(new NbtFile(path), Vector3Int.invalidPos);
 
-                for (int Y = 0; Y < schematic.YMax; Y++)
+
+                return GenerateMetaData(metadataPath, name.Substring(0, name.LastIndexOf('.')), schematic);
+            }
+            else
+                return null;
+        }
+
+        private static SchematicMetadata GenerateMetaData(string metadataPath, string name, Schematic schematic)
+        {
+            var metadata = new SchematicMetadata();
+            metadata.Name = name;
+
+            for (int Y = 0; Y <= schematic.YMax; Y++)
+            {
+                for (int Z = 0; Z <= schematic.ZMax; Z++)
                 {
-                    for (int Z = 0; Z < schematic.ZMax; Z++)
+                    for (int X = 0; X <= schematic.XMax; X++)
                     {
-                        for (int X = 0; X < schematic.XMax; X++)
+                        if (schematic.Blocks.GetLength(0) > X &&
+                            schematic.Blocks.GetLength(1) > Y &&
+                            schematic.Blocks.GetLength(2) > Z &&
+                            schematic.Blocks[X, Y, Z] != null)
                         {
                             var block = schematic.Blocks[X, Y, Z].MappedBlock;
 
                             if (block.CSIndex != ColonyBuiltIn.ItemTypes.AIR.Id)
                             {
                                 var buildType = ItemTypes.GetType(block.CSIndex);
-                                var index = block.CSIndex;
 
-                                if (!string.IsNullOrWhiteSpace(buildType.ParentType))
-                                    index = ItemTypes.GetType(buildType.ParentType).ItemIndex;
-
-
-                                if (metadata.Blocks.TryGetValue(index, out var blockMeta))
+                                if (!buildType.Name.Contains("bedend"))
                                 {
-                                    blockMeta.Count++;
-                                }
-                                else
-                                {
-                                    blockMeta = new SchematicBlockMetadata();
-                                    blockMeta.Count++;
-                                    blockMeta.ItemId = index;
+                                    var index = block.CSIndex;
 
-                                    metadata.Blocks.Add(blockMeta.ItemId, blockMeta);
+                                    if (!string.IsNullOrWhiteSpace(buildType.ParentType) && !buildType.Name.Contains("grass") && !buildType.Name.Contains("leaves"))
+                                        index = ItemTypes.GetType(buildType.ParentType).ItemIndex;
+
+                                    if (metadata.Blocks.TryGetValue(index, out var blockMeta))
+                                    {
+                                        blockMeta.Count++;
+                                    }
+                                    else
+                                    {
+                                        blockMeta = new SchematicBlockMetadata();
+                                        blockMeta.Count++;
+                                        blockMeta.ItemId = index;
+
+                                        metadata.Blocks.Add(blockMeta.ItemId, blockMeta);
+                                    }
                                 }
                             }
                         }
                     }
                 }
-
-                metadata.MaxX = schematic.XMax;
-                metadata.MaxY = schematic.YMax;
-                metadata.MaxZ = schematic.ZMax;
-
-                JSON.Serialize(metadataPath, metadata.JsonSerialize());
-
-                return metadata;
             }
-            else
-                return null;
+
+            metadata.MaxX = schematic.XMax;
+            metadata.MaxY = schematic.YMax;
+            metadata.MaxZ = schematic.ZMax;
+
+            JSON.Serialize(metadataPath, metadata.JsonSerialize());
+
+            return metadata;
         }
 
         public static Schematic LoadSchematic(NbtFile nbtFile, Vector3Int startPos)
@@ -182,13 +264,13 @@ namespace Pandaros.Settlers.NBT
                 switch (tag.Name)
                 {
                     case "Width": //Short
-                        raw.XMax = tag.ShortValue;
+                        raw.XMax = tag.IntValue;
                         break;
                     case "Height": //Short
-                        raw.YMax = tag.ShortValue;
+                        raw.YMax = tag.IntValue;
                         break;
                     case "Length": //Short
-                        raw.ZMax = tag.ShortValue;
+                        raw.ZMax = tag.IntValue;
                         break;
                     default:
                         break;
@@ -207,13 +289,22 @@ namespace Pandaros.Settlers.NBT
                 switch (tag.Name)
                 {
                     case "Width": //Short
-                        raw.XMax = tag.ShortValue;
+                        if (rootTag.Contains("CSBlocks"))
+                            raw.XMax = tag.IntValue + 1;
+                        else
+                            raw.XMax = tag.IntValue;
                         break;
                     case "Height": //Short
-                        raw.YMax = tag.ShortValue;
+                        if (rootTag.Contains("CSBlocks"))
+                            raw.YMax = tag.IntValue + 1;
+                        else
+                            raw.YMax = tag.IntValue;
                         break;
                     case "Length": //Short
-                        raw.ZMax = tag.ShortValue;
+                        if (rootTag.Contains("CSBlocks"))
+                            raw.ZMax = tag.IntValue + 1;
+                        else
+                            raw.ZMax = tag.IntValue;
                         break;
                     case "Materials": //String
                         raw.Materials = tag.StringValue;
@@ -226,14 +317,10 @@ namespace Pandaros.Settlers.NBT
                         break;
                     case "Entities": //List
                         break; //Ignore
-                    //case "TileEntities": //List
-                    //    TileEntity[,,] tileEntities = new TileEntity[raw.XMax, raw.YMax, raw.ZMax];
-                    //    raw.TileEntities = GetTileEntities(tag, tileEntities);
-                    //    break;
                     case "Icon": //Compound
                         break; //Ignore
                     case "CSBlocks":
-                        raw.CSBlocks = GetCSBlocks(tag, new SchematicBlock[raw.XMax, raw.YMax, raw.ZMax]);
+                        raw.CSBlocks = GetCSBlocks(raw, tag, new SchematicBlock[raw.XMax + 1, raw.YMax + 1, raw.ZMax + 1]);
                         break;
                     case "SchematicaMapping": //Compound
                         tag.ToString();
@@ -245,7 +332,7 @@ namespace Pandaros.Settlers.NBT
             return raw;
         }
 
-        public static SchematicBlock[,,] GetCSBlocks(NbtTag csBlockTag, SchematicBlock[,,] list)
+        public static SchematicBlock[,,] GetCSBlocks(RawSchematic raw, NbtTag csBlockTag, SchematicBlock[,,] list)
         {
             NbtList csBlocks = csBlockTag as NbtList;
 
@@ -272,26 +359,28 @@ namespace Pandaros.Settlers.NBT
                     list[xTag.IntValue, yTag.IntValue, zTag.IntValue] = block;
                 }
             }
+
+            for (int Y = 0; Y <= raw.YMax; Y++)
+            {
+                for (int Z = 0; Z <= raw.ZMax; Z++)
+                {
+                    for (int X = 0; X <= raw.XMax; X++)
+                    {
+                        if (list[X, Y, Z] == null)
+                            list[X, Y, Z] = new SchematicBlock()
+                            {
+                                X = X,
+                                Y = Y,
+                                Z = Z,
+                                BlockID = ColonyBuiltIn.ItemTypes.AIR,
+                                CSBlock = true
+                            };
+                    }
+                }
+            }
+
             return list;
         }
-
-        //private static TileEntity[,,] GetTileEntities(NbtTag tileEntitiesList, TileEntity[,,] list)
-        //{
-        //    NbtList TileEntities = tileEntitiesList as NbtList;
-        //    if (TileEntities != null)
-        //    {
-        //        foreach (NbtCompound compTag in TileEntities)
-        //        {
-        //            NbtTag xTag = compTag["x"];
-        //            NbtTag yTag = compTag["y"];
-        //            NbtTag zTag = compTag["z"];
-        //            NbtTag idTag = compTag["id"];
-        //            TileEntity entity = new TileEntity(xTag.IntValue, yTag.IntValue, zTag.IntValue, idTag.StringValue);
-        //            list[xTag.IntValue, yTag.IntValue, zTag.IntValue] = entity;
-        //        }
-        //    }
-        //    return list;
-        //}
 
         public static SchematicBlock[,,] GetBlocks(RawSchematic rawSchematic)
         {

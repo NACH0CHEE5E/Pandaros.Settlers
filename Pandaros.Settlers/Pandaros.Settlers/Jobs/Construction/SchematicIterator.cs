@@ -12,7 +12,6 @@ namespace Pandaros.Settlers.Jobs.Construction
 
         protected Vector3Int cursor;
         protected Vector3Int iterationChunkLocation;
-        protected int iterationIndex;
 
         public string SchematicName { get; private set; }
         public Schematic BuilderSchematic { get; private set; }
@@ -24,10 +23,8 @@ namespace Pandaros.Settlers.Jobs.Construction
             positionMin = area.Minimum;
             positionMax = area.Maximum;
 
-            //iterationChunkLocation = new Vector3Int(positionMin.x & -16, positionMin.y & -16, positionMin.z & -16);
             iterationChunkLocation = positionMin;
             cursor = positionMin;
-            iterationIndex = -1;
 
             SchematicName = schematicName;
 

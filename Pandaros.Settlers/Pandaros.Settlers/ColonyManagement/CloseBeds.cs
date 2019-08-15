@@ -1,25 +1,38 @@
-﻿using Happiness;
+﻿using BlockEntities.Implementations;
+using Happiness;
+using NetworkUI;
+using NetworkUI.Items;
+using Pandaros.API;
+using Pandaros.API.Entities;
+using Pandaros.API.Extender;
+using Pandaros.API.localization;
 using Pipliz;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static BlockEntities.Implementations.BedTracker;
 
 namespace Pandaros.Settlers.ColonyManagement
 {
     [ModLoader.ModManager]
-    public class CloseBeds : IHappinessCause
+    public class CloseBeds : IHappinessCause, IOnConstructInventoryManageColonyUI
     {
-        private class BedStateObject
+        public class BedStateObject
         {
             public Colony Colony { get; set; }
-            public Dictionary<Bed, Vector3Int> Beds { get; set; } = new Dictionary<Bed, Vector3Int>();
+            public Dictionary<Bed, CachedBedState> Beds { get; set; } = new Dictionary<Bed, CachedBedState>();
+        }
+
+        public class CachedBedState
+        {
+            public Vector3Int Position { get; set; }
+            public bool Taken { get; set; }
+            public bool IsHappy { get; set; } = true;
         }
 
         public static Dictionary<Colony, int> CachedHappiness { get; set; } = new Dictionary<Colony, int>();
-        public static localization.LocalizationHelper LocalizationHelper { get; private set; } = new localization.LocalizationHelper("Happiness");
+        public static LocalizationHelper LocalizationHelper { get; private set; } = new LocalizationHelper(GameLoader.NAMESPACE, "Happiness");
+        public static Dictionary<Colony, BedStateObject> BedCache { get; private set; } = new Dictionary<Colony, BedStateObject>();
+        static readonly LocalizationHelper _localizationHelper = new LocalizationHelper(GameLoader.NAMESPACE, "Beds");
 
         [ModLoader.ModCallback(ModLoader.EModCallbackType.OnPlayerConnectedLate, GameLoader.NAMESPACE + ".Entities.PlayerState.OnPlayerConnectedSuperLate")]
         public static void OnPlayerConnectedSuperLate(Players.Player p)
@@ -50,7 +63,9 @@ namespace Pandaros.Settlers.ColonyManagement
 
         public float Evaluate(Colony colony)
         {
-            if (CachedHappiness.TryGetValue(colony, out var value))
+            var cs = ColonyState.GetColonyState(colony);
+
+            if (cs.Difficulty.Name != GameDifficulty.Normal.Name && CachedHappiness.TryGetValue(colony, out var value))
                 return value;
             else
                 return 0;
@@ -63,37 +78,50 @@ namespace Pandaros.Settlers.ColonyManagement
 
         public static void CalculateBeds(Colony colony)
         {
-            BedStateObject bso = new BedStateObject();
-            bso.Colony = colony;
-            ServerManager.BlockEntityTracker.BedTracker.Positions.Foreach(ForEachAction, ref bso);
+            var cs = ColonyState.GetColonyState(colony);
 
-            Task.Run(() =>
+            if (cs.Difficulty.Name != GameDifficulty.Normal.Name)
             {
+                BedStateObject bso = new BedStateObject();
+                bso.Colony = colony;
+                colony.BedTracker.ForeachBedInstance(ForEachAction, ref bso);
+
                 int happiness = 0;
 
                 foreach (var bed in bso.Beds)
                 {
-                    var bedEnd = bed.Value.Add(-1, 0, 0);
+                    try
+                    {
+                        var bedEnd = bed.Value.Position.Add(-1, 0, 0);
 
-                    if (bed.Key.BedType == ColonyBuiltIn.ItemTypes.BEDXP)
-                    {
-                        bedEnd = bed.Value.Add(1, 0, 0);
-                    }
-                    else if (bed.Key.BedType == ColonyBuiltIn.ItemTypes.BEDZN)
-                    {
-                        bedEnd = bed.Value.Add(0, 0, -1);
-                    }
-                    else if (bed.Key.BedType == ColonyBuiltIn.ItemTypes.BEDZP)
-                    {
-                        bedEnd = bed.Value.Add(0, 0, 1);
-                    }
+                        if (bed.Key.BedType == ColonyBuiltIn.ItemTypes.BEDXP)
+                        {
+                            bedEnd = bed.Value.Position.Add(1, 0, 0);
+                        }
+                        else if (bed.Key.BedType == ColonyBuiltIn.ItemTypes.BEDZN)
+                        {
+                            bedEnd = bed.Value.Position.Add(0, 0, -1);
+                        }
+                        else if (bed.Key.BedType == ColonyBuiltIn.ItemTypes.BEDZP)
+                        {
+                            bedEnd = bed.Value.Position.Add(0, 0, 1);
+                        }
 
-                    if (!IsHappy(bed.Value, bedEnd))
-                        happiness -= 1;
+                        if (!IsHappy(bed.Value.Position, bedEnd))
+                        {
+                            happiness -= 1;
+                            bed.Value.IsHappy = false;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        SettlersLogger.LogError(ex);
+                    }
                 }
 
                 CachedHappiness[colony] = happiness;
-            });
+                BedCache[colony] = bso;
+            }
         }
 
         private static bool IsHappy(Vector3Int currentPos, Vector3Int ignorePos)
@@ -150,10 +178,52 @@ namespace Pandaros.Settlers.ColonyManagement
                    type == ColonyBuiltIn.ItemTypes.BEDENDZP;
         }
 
-        private static void ForEachAction(Vector3Int position, Bed bed, ref BedStateObject stateObject)
+        private static void ForEachAction(Vector3Int position, bool bedIsUsed, BedTracker.Bed bed, ref BedStateObject stateObject)
         {
             if (bed.Colony == stateObject.Colony && !stateObject.Beds.ContainsKey(bed))
-                stateObject.Beds.Add(bed, position);
+                stateObject.Beds.Add(bed, new CachedBedState() { Position = position, Taken = bedIsUsed });
+        }
+
+        public void OnConstructInventoryManageColonyUI(Players.Player player, NetworkMenu networkMenu)
+        {
+            if (player.ActiveColony != null)
+                networkMenu.Items.Add(new ButtonCallback(GameLoader.NAMESPACE + ".BedLocations", new LabelData(_localizationHelper.GetLocalizationKey("BedLocations"), UnityEngine.Color.black), 200));
+        }
+
+        [ModLoader.ModCallback(ModLoader.EModCallbackType.OnPlayerPushedNetworkUIButton, GameLoader.NAMESPACE + ".ColonyManager.CloseBeds.PressButton")]
+        public static void PressButton(ButtonPressCallbackData data)
+        {
+            if (data.ButtonIdentifier == GameLoader.NAMESPACE + ".BedLocations" && 
+                data.Player.ActiveColony != null &&
+                BedCache.TryGetValue(data.Player.ActiveColony, out var bso))
+            {
+                NetworkMenu menu = new NetworkMenu();
+                menu.LocalStorage.SetAs("header", _localizationHelper.LocalizeOrDefault("BedLocations", data.Player));
+                menu.Width = 800;
+                menu.Height = 600;
+                menu.ForceClosePopups = true;
+
+                List<ValueTuple<IItem, int>> headerItems = new List<ValueTuple<IItem, int>>();
+
+                headerItems.Add((new Label(new LabelData(_localizationHelper.GetLocalizationKey("Position"), UnityEngine.Color.black)), 400));
+                headerItems.Add((new Label(new LabelData(_localizationHelper.GetLocalizationKey("Occupied"), UnityEngine.Color.black)), 200));
+                headerItems.Add((new Label(new LabelData(_localizationHelper.GetLocalizationKey("Placement"), UnityEngine.Color.black)), 200));
+
+                menu.Items.Add(new HorizontalRow(headerItems));
+
+                foreach (var bed in bso.Beds)
+                {
+                    List<ValueTuple<IItem, int>> items = new List<ValueTuple<IItem, int>>();
+
+                    items.Add((new Label(new LabelData(string.Format("x:{0} y:{1} z:{2}", bed.Value.Position.x, bed.Value.Position.y, bed.Value.Position.z), UnityEngine.Color.black)), 400));
+                    items.Add((new Label(new LabelData(bed.Value.Taken ? _localizationHelper.GetLocalizationKey("Yes") : _localizationHelper.GetLocalizationKey("No"), UnityEngine.Color.black)), 200));
+                    items.Add((new Label(new LabelData(bed.Value.IsHappy ? _localizationHelper.GetLocalizationKey("Good") : _localizationHelper.GetLocalizationKey("Bad"), UnityEngine.Color.black)), 200));
+
+                    menu.Items.Add(new HorizontalRow(items));
+                }
+
+                NetworkMenuManager.SendServerPopup(data.Player, menu);
+            }
         }
     }
 }

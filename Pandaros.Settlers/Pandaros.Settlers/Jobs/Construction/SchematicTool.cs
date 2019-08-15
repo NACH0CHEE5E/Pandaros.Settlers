@@ -1,19 +1,21 @@
-﻿using BlockTypes;
-using NetworkUI;
+﻿using NetworkUI;
 using NetworkUI.Items;
+using Pandaros.API;
+using Pandaros.API.Items;
+using Pandaros.API.localization;
+using Pandaros.API.Models;
+using Pandaros.API.Research;
 using Pandaros.Settlers.NBT;
-using Pandaros.Settlers.Items;
-using Pandaros.Settlers.Research;
 using Pipliz;
 using Pipliz.JSON;
+using Recipes;
+using Science;
 using Shared;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using static AreaJobTracker;
-using Pandaros.Settlers.Models;
-using Science;
 
 namespace Pandaros.Settlers.Jobs.Construction
 {
@@ -63,8 +65,8 @@ namespace Pandaros.Settlers.Jobs.Construction
                 0,
                 new List<IResearchableCondition>()
                 {
-                    new HappinessCondition() { Threshold = 150 },
-                    new ColonistCountCondition() { Threshold = 250 }
+                    new HappinessCondition() { Threshold = 80 },
+                    new ColonistCountCondition() { Threshold = 150 }
                 }
             }
         };
@@ -102,6 +104,31 @@ namespace Pandaros.Settlers.Jobs.Construction
         }
     }
 
+    public class SchematicToolRecipe : ICSRecipe
+    {
+        public List<RecipeItem> requires => new List<RecipeItem>()
+        {
+            new RecipeItem(ColonyBuiltIn.ItemTypes.PLANKS.Id),
+            new RecipeItem(ColonyBuiltIn.ItemTypes.SCIENCEBAGCOLONY.Id),
+            new RecipeItem(ColonyBuiltIn.ItemTypes.SCIENCEBAGADVANCED.Id)
+        };
+
+        public List<RecipeResult> results => new List<RecipeResult>()
+        {
+            new RecipeResult(GameLoader.NAMESPACE + ".SchematicTool")
+        };
+
+        public CraftPriority defaultPriority => CraftPriority.Medium;
+
+        public bool isOptional => true;
+
+        public int defaultLimit => 1;
+
+        public string Job => ColonyBuiltIn.NpcTypes.CRAFTER;
+
+        public string name => GameLoader.NAMESPACE + ".SchematicTool";
+    }
+
     [ModLoader.ModManager]
     public class SchematicMenu
     {
@@ -114,7 +141,7 @@ namespace Pandaros.Settlers.Jobs.Construction
         };
 
         private static readonly string Selected_Schematic = GameLoader.NAMESPACE + ".SelectedSchematic";
-        static readonly Pandaros.Settlers.localization.LocalizationHelper _localizationHelper = new localization.LocalizationHelper("buildertool");
+        static readonly LocalizationHelper _localizationHelper = new LocalizationHelper(GameLoader.NAMESPACE, "buildertool");
         private static Dictionary<Players.Player, Tuple<SchematicClickType, string, Schematic.Rotation>> _awaitingClick = new Dictionary<Players.Player, Tuple<SchematicClickType, string, Schematic.Rotation>>();
 
         [ModLoader.ModCallback(ModLoader.EModCallbackType.OnPlayerClicked, GameLoader.NAMESPACE + ".Jobs.Construction.SchematicMenu.OpenMenu")]
@@ -125,10 +152,10 @@ namespace Pandaros.Settlers.Jobs.Construction
             {
                 if (player.ActiveColony == null)
                 {
-                    PandaChat.Send(player, _localizationHelper.LocalizeOrDefault("ErrorOpening", player), ChatColor.red);
+                    PandaChat.Send(player, _localizationHelper, "ErrorOpening", ChatColor.red);
                     return;
                 }
-
+                
                 if (!_awaitingClick.ContainsKey(player))
                 {
                     SendMainMenu(player);
@@ -158,7 +185,7 @@ namespace Pandaros.Settlers.Jobs.Construction
                                 if (tuple.Item3 >= Schematic.Rotation.Left)
                                     schematic.Rotate();
 
-                                var maxSize = location.Add(schematic.XMax, schematic.YMax, schematic.ZMax);
+                                var maxSize = location.Add(schematic.XMax - 1, schematic.YMax - 1, schematic.ZMax - 1);
                                 AreaJobTracker.CreateNewAreaJob("pipliz.constructionarea", args, player.ActiveColony, location, maxSize);
                                 AreaJobTracker.SendData(player);
                             }
@@ -182,7 +209,7 @@ namespace Pandaros.Settlers.Jobs.Construction
             menu.Items.Add(new DropDown(new LabelData(_localizationHelper.GetLocalizationKey("Schematic"), UnityEngine.Color.black), Selected_Schematic, options.Select(fi => fi.Name.Replace(".schematic", "")).ToList()));
             menu.Items.Add(new ButtonCallback(GameLoader.NAMESPACE + ".ShowBuildDetails", new LabelData(_localizationHelper.GetLocalizationKey("Details"), UnityEngine.Color.black, UnityEngine.TextAnchor.MiddleCenter)));
             menu.LocalStorage.SetAs(Selected_Schematic, 0);
-            //menu.Items.Add(new ButtonCallback(GameLoader.NAMESPACE + ".SetArchitectArea", new LabelData(_localizationHelper.GetLocalizationKey("Save"), UnityEngine.Color.black, UnityEngine.TextAnchor.MiddleCenter)));
+            menu.Items.Add(new ButtonCallback(GameLoader.NAMESPACE + ".SetScemanticName", new LabelData(_localizationHelper.GetLocalizationKey("Save"), UnityEngine.Color.black, UnityEngine.TextAnchor.MiddleCenter)));
 
             NetworkMenuManager.SendServerPopup(player, menu);
         }
@@ -201,9 +228,53 @@ namespace Pandaros.Settlers.Jobs.Construction
         {
             switch (data.ButtonIdentifier)
             {
+                case GameLoader.NAMESPACE + ".SetScemanticName":
+                    NetworkMenu saveMenu = new NetworkMenu();
+                    saveMenu.LocalStorage.SetAs("header", _localizationHelper.LocalizeOrDefault("SaveSchematic", data.Player));
+                    saveMenu.Width = 600;
+                    saveMenu.Height = 300;
+                    saveMenu.ForceClosePopups = true;
+                    saveMenu.Items.Add(new Label(new LabelData(_localizationHelper.GetLocalizationKey("SaveInstructions"), UnityEngine.Color.black)));
+                    saveMenu.Items.Add(new InputField("Construction.SetArchitectArea"));
+                    saveMenu.Items.Add(new ButtonCallback(GameLoader.NAMESPACE + ".SetArchitectArea", new LabelData(_localizationHelper.GetLocalizationKey("Start"), UnityEngine.Color.black)));
+
+                    NetworkMenuManager.SendServerPopup(data.Player, saveMenu);
+                    break;
+
                 case GameLoader.NAMESPACE + ".SetArchitectArea":
-                    
                     NetworkMenuManager.CloseServerPopup(data.Player);
+                    if (data.Storage.TryGetAs("Construction.SetArchitectArea", out string schematicName))
+                    {
+                        var colonySaves = GameLoader.Schematic_SAVE_LOC + $"\\{data.Player.ActiveColony.ColonyID}\\";
+
+                        if (!Directory.Exists(colonySaves))
+                            Directory.CreateDirectory(colonySaves);
+
+                        var schematicFile = Path.Combine(colonySaves, schematicName + ".schematic");
+
+                        if (File.Exists(schematicFile))
+                            File.Delete(schematicFile);
+
+                        var metaDataSave = Path.Combine(GameLoader.Schematic_SAVE_LOC, schematicName + ".schematic.metadata.json");
+
+                        if (File.Exists(metaDataSave))
+                            File.Delete(metaDataSave);
+
+                        AreaJobTracker.StartCommandToolSelection(data.Player, new CommandToolTypeData()
+                        {
+                            AreaType = "pipliz.constructionarea",
+                            LocaleEntry = _localizationHelper.LocalizeOrDefault("Architect", data.Player),
+                            JSONData = new JSONNode().SetAs(ArchitectLoader.NAME + ".ArchitectSchematicName", schematicName).SetAs("constructionType", GameLoader.NAMESPACE + ".Architect"),
+                            OneAreaOnly = true,
+                            Maximum3DBlockCount = int.MaxValue,
+                            Maximum2DBlockCount = int.MaxValue,
+                            MaximumHeight = int.MaxValue,
+                            MinimumHeight = 1,
+                            Minimum2DBlockCount = 1,
+                            Minimum3DBlockCount = 1
+                        });
+                    }
+
                     break;
 
                 case GameLoader.NAMESPACE + ".ShowMainMenu":
@@ -221,10 +292,10 @@ namespace Pandaros.Settlers.Jobs.Construction
                         if (SchematicReader.TryGetSchematicMetadata(selectedSchematic.Name, data.Player.ActiveColony.ColonyID, out SchematicMetadata schematicMetadata))
                         {
                             if (schematicMetadata.Blocks.Count == 1 && schematicMetadata.Blocks.ContainsKey(ColonyBuiltIn.ItemTypes.AIR.Id))
-                                PandaChat.Send(data.Player, _localizationHelper.LocalizeOrDefault("invlaidSchematic", data.Player), ChatColor.red);
+                                PandaChat.Send(data.Player, _localizationHelper, "invlaidSchematic", ChatColor.red);
                             {
                                 NetworkMenu menu = new NetworkMenu();
-                                menu.Width = 600;
+                                menu.Width = 800;
                                 menu.Height = 600;
                                 menu.LocalStorage.SetAs("header", selectedSchematic.Name.Replace(".schematic","") + " " + _localizationHelper.LocalizeOrDefault("Details", data.Player));
 
@@ -233,15 +304,36 @@ namespace Pandaros.Settlers.Jobs.Construction
                                 menu.Items.Add(new Label(new LabelData(_localizationHelper.LocalizeOrDefault("Length", data.Player) + ": " + schematicMetadata.MaxX, UnityEngine.Color.black)));
                                 menu.LocalStorage.SetAs(Selected_Schematic, selectedSchematic.Name);
 
+                                List<ValueTuple<IItem, int>> headerItems = new List<ValueTuple<IItem, int>>();
+                                headerItems.Add(ValueTuple.Create<IItem, int>(new Label(new LabelData("  ", UnityEngine.Color.black)), 200));
+                                headerItems.Add(ValueTuple.Create<IItem, int>(new Label(new LabelData(_localizationHelper.LocalizeOrDefault("Item", data.Player), UnityEngine.Color.black)), 200));
+                                headerItems.Add(ValueTuple.Create<IItem, int>(new Label(new LabelData(_localizationHelper.LocalizeOrDefault("Required", data.Player), UnityEngine.Color.black)), 200));
+                                headerItems.Add(ValueTuple.Create<IItem, int>(new Label(new LabelData(_localizationHelper.LocalizeOrDefault("InStockpile", data.Player), UnityEngine.Color.black)), 200));
+                                menu.Items.Add(new HorizontalRow(headerItems));
+
                                 foreach (var kvp in schematicMetadata.Blocks)
                                 {
-                                    var item = ItemTypes.GetType(kvp.Key);
+                                    try
+                                    {
+                                        if (ItemTypes.TryGetType(kvp.Key, out ItemTypes.ItemType item))
+                                        {
+                                            var stockpileCount = 0;
+                                            data.Player.ActiveColony.Stockpile.Items.TryGetValue(item.ItemIndex, out stockpileCount);
 
-                                    List<ValueTuple<IItem, int>> items = new List<ValueTuple<IItem, int>>();
-                                    items.Add(ValueTuple.Create<IItem, int>(new ItemIcon(kvp.Key), 200));
-                                    items.Add(ValueTuple.Create<IItem, int>(new Label(new LabelData(item.Name, UnityEngine.Color.black, UnityEngine.TextAnchor.MiddleLeft, 18, LabelData.ELocalizationType.Type)), 200));
-                                    items.Add(ValueTuple.Create<IItem, int>(new Label(new LabelData(" x " + kvp.Value.Count, UnityEngine.Color.black)), 200));
-                                    menu.Items.Add(new HorizontalRow(items));
+                                            List<ValueTuple<IItem, int>> items = new List<ValueTuple<IItem, int>>();
+                                            items.Add(ValueTuple.Create<IItem, int>(new ItemIcon(kvp.Key), 200));
+                                            items.Add(ValueTuple.Create<IItem, int>(new Label(new LabelData(item.Name, UnityEngine.Color.black, UnityEngine.TextAnchor.MiddleLeft, 18, LabelData.ELocalizationType.Type)), 200));
+                                            items.Add(ValueTuple.Create<IItem, int>(new Label(new LabelData(" x " + kvp.Value.Count, UnityEngine.Color.black)), 200));
+                                            items.Add(ValueTuple.Create<IItem, int>(new Label(new LabelData(" x " + stockpileCount, UnityEngine.Color.black)), 200));
+                                            menu.Items.Add(new HorizontalRow(items));
+                                        }
+                                        else
+                                            SettlersLogger.Log(ChatColor.orange, "Unknown item for schematic: {0}", kvp.Key);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        SettlersLogger.LogError(ex);
+                                    }
                                 }
 
                                 menu.Items.Add(new DropDown(new LabelData(_localizationHelper.GetLocalizationKey("Rotation"), UnityEngine.Color.black), Selected_Schematic + ".Rotation", _rotation.Select(r => r.ToString()).ToList()));
@@ -260,15 +352,15 @@ namespace Pandaros.Settlers.Jobs.Construction
                     var scem = data.Storage.GetAs<string>(Selected_Schematic);
                     var rotation = data.Storage.GetAs<int>(Selected_Schematic + ".Rotation");
 
-                    PandaLogger.Log("Schematic: {0}", scem);
+                    SettlersLogger.Log("Schematic: {0}", scem);
 
                     if (SchematicReader.TryGetSchematicMetadata(scem, data.Player.ActiveColony.ColonyID, out SchematicMetadata metadata))
                     {
                         if (metadata.Blocks.Count == 1 && metadata.Blocks.ContainsKey(ColonyBuiltIn.ItemTypes.AIR.Id))
-                            PandaChat.Send(data.Player, _localizationHelper.LocalizeOrDefault("invlaidSchematic", data.Player), ChatColor.red);
+                            PandaChat.Send(data.Player, _localizationHelper, "invlaidSchematic", ChatColor.red);
                         {
                             _awaitingClick[data.Player] = Tuple.Create(SchematicClickType.Build, scem, _rotation[rotation]);
-                            PandaChat.Send(data.Player, _localizationHelper.LocalizeOrDefault("instructions", data.Player));
+                            PandaChat.Send(data.Player, _localizationHelper, "instructions");
                             NetworkMenuManager.CloseServerPopup(data.Player);
                         }
                     }

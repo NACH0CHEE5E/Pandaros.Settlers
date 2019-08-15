@@ -1,6 +1,8 @@
 ﻿using Chatting;
-using Pandaros.Settlers.Entities;
-using Pipliz;
+using Pandaros.API;
+using Pandaros.API.Entities;
+using Pandaros.API.localization;
+using Pandaros.API.Models;
 using Pipliz.JSON;
 using System;
 using System.Collections.Generic;
@@ -11,13 +13,14 @@ namespace Pandaros.Settlers
     public class SettlersChatCommand : IChatCommand
     {
         private static string _Setters = GameLoader.NAMESPACE + ".Settlers";
+        private static LocalizationHelper _localizationHelper = new LocalizationHelper(GameLoader.NAMESPACE, "Settlers");
 
         [ModLoader.ModCallback(ModLoader.EModCallbackType.OnConstructWorldSettingsUI, GameLoader.NAMESPACE + "Settlers.AddSetting")]
         public static void AddSetting(Players.Player player, NetworkUI.NetworkMenu menu)
         {
             if (player.ActiveColony != null)
             {
-                menu.Items.Add(new NetworkUI.Items.DropDown("Random Settlers", _Setters, new List<string>() { "Disabled", "Enabled" }));
+                menu.Items.Add(new NetworkUI.Items.DropDown("Random Settlers", _Setters, new List<string>() { "Prompt", "Always Accept", "Disabled" }));
                 var ps = ColonyState.GetColonyState(player.ActiveColony);
                 menu.LocalStorage.SetAs(_Setters, Convert.ToInt32(ps.SettlersEnabled));
             }
@@ -30,22 +33,22 @@ namespace Pandaros.Settlers
                 switch (data.Item3)
                 {
                     case "server_popup":
-                        var ps = ColonyState.GetColonyState(data.Item1.ActiveColony);
+                        var cs = ColonyState.GetColonyState(data.Item1.ActiveColony);
                         var maxToggleTimes = SettlersConfiguration.GetorDefault("MaxSettlersToggle", 4);
 
-                        if (ps != null)
+                        if (cs != null)
                         {
                             if (!SettlersConfiguration.GetorDefault("SettlersEnabled", true))
-                                PandaChat.Send(data.Item1, "The server administrator had disabled the changing of Settlers.", ChatColor.red);
-                            else if (!HasToggeledMaxTimes(maxToggleTimes, ps, data.Item1))
+                                PandaChat.Send(data.Item1, _localizationHelper, "AdminDisabledSettlers", ChatColor.red);
+                            else if (!HasToggeledMaxTimes(maxToggleTimes, cs, data.Item1))
                             {
-                                var def = Convert.ToInt32(ps.SettlersEnabled);
+                                var def = (int)cs.SettlersEnabled;
                                 var enabled = data.Item2.GetAsOrDefault(_Setters, def);
 
                                 if (def != enabled)
                                 {
-                                    TurnSettlersOn(data.Item1, ps, maxToggleTimes, enabled != 0);
-                                    PandaChat.Send(data.Item1, "Settlers! Mod Settlers are now " + (ps.SettlersEnabled ? "on" : "off"), ChatColor.green);
+                                    TurnSettlersOn(data.Item1, cs, maxToggleTimes, (SettlersState)enabled);
+                                    PandaChat.Send(data.Item1, _localizationHelper, "SettlersState", ChatColor.green, cs.SettlersEnabled.ToString());
                                 }
                             }
                         }
@@ -69,8 +72,7 @@ namespace Pandaros.Settlers
 
             if (maxToggleTimes == 0 && !SettlersConfiguration.GetorDefault("SettlersEnabled", true))
             {
-                PandaChat.Send(player, "The server administrator had disabled the changing of Settlers.",
-                               ChatColor.red);
+                PandaChat.Send(player, _localizationHelper, "AdminDisabledSettlers.", ChatColor.red);
 
                 return true;
             }
@@ -80,16 +82,19 @@ namespace Pandaros.Settlers
 
             if (array.Count == 1)
             {
-                PandaChat.Send(player, "Settlers! Settlers are {0}. You have toggled this {1} out of {2} times.",
-                               ChatColor.green, state.SettlersEnabled ? "on" : "off",
-                               state.SettlersToggledTimes.ToString(), maxToggleTimes.ToString());
-
+                PandaChat.Send(player,
+                               _localizationHelper,
+                               "SettlersToggleTime",
+                               ChatColor.green, 
+                               state.SettlersEnabled.ToString(),
+                               state.SettlersToggledTimes.ToString(),
+                               maxToggleTimes.ToString());
                 return true;
             }
 
-            if (array.Count == 2 && state.SettlersToggledTimes <= maxToggleTimes)
+            if (array.Count == 2 && state.SettlersToggledTimes <= maxToggleTimes && Enum.TryParse<SettlersState>(array[1].ToLower().Trim(), out var settlersState))
             {
-                TurnSettlersOn(player, state, maxToggleTimes, array[1].ToLower().Trim() == "on" || array[1].ToLower().Trim() == "true");
+                TurnSettlersOn(player, state, maxToggleTimes, settlersState);
             }
 
             return true;
@@ -99,9 +104,7 @@ namespace Pandaros.Settlers
         {
             if (state.SettlersToggledTimes >= maxToggleTimes)
             {
-                PandaChat.Send(player,
-                               $"To limit abuse of the /settlers command you can no longer toggle settlers on or off. You have used your alloted {maxToggleTimes} times.",
-                               ChatColor.red);
+                PandaChat.Send(player, _localizationHelper, "AbuseWarning", ChatColor.red, maxToggleTimes.ToString());
 
                 return true;
             }
@@ -109,16 +112,20 @@ namespace Pandaros.Settlers
             return false;
         }
 
-        private static void TurnSettlersOn(Players.Player player, ColonyState state, int maxToggleTimes, bool enabled)
+        private static void TurnSettlersOn(Players.Player player, ColonyState state, int maxToggleTimes, SettlersState enabled)
         {
-            if (!state.SettlersEnabled)
+            if (state.SettlersEnabled == SettlersState.Disabled && enabled != SettlersState.Disabled)
                 state.SettlersToggledTimes++;
 
             state.SettlersEnabled = enabled;
 
             PandaChat.Send(player,
-                           $"Settlers! Mod Settlers are now on. You have toggled this {state.SettlersToggledTimes} out of {maxToggleTimes} times.",
-                           ChatColor.green);
+                            _localizationHelper,
+                            "SettlersToggleTime",
+                            ChatColor.green,
+                            state.SettlersEnabled.ToString(),
+                            state.SettlersToggledTimes.ToString(),
+                            maxToggleTimes.ToString());
 
             NetworkUI.NetworkMenuManager.SendColonySettingsUI(player);
         }

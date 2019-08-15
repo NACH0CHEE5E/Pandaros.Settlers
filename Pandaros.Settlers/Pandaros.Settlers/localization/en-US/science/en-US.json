@@ -344,21 +344,101 @@
     },
     "Pandaros": {
       "Settlers": {
+        "InventoryUpgrade1": {
+          "name": "Mining Machine Inventory Upgrade I",
+          "description": "Increases inventory space of the mining machine to 15!"
+        },
+        "InventoryUpgrade2": {
+          "name": "Mining Machine Inventory Upgrade II",
+          "description": "Increases inventory space of the mining machine to 20!"
+        },
+        "InventoryUpgrade3": {
+          "name": "Mining Machine Inventory Upgrade III",
+          "description": "Increases inventory space of the mining machine to 25!"
+        },
+        "InventoryUpgrade4": {
+          "name": "Mining Machine Inventory Upgrade IV",
+          "description": "Increases inventory space of the mining machine to 30!"
+        },
+        "InventoryUpgrade5": {
+          "name": "Mining Machine Inventory Upgrade V",
+          "description": "Increases inventory space of the mining machine to 35!"
+        },
+        "ImprovedMonorailTrainSpeed1": {
+          "name": "Improved Propulsion Platform Speed I",
+          "description": "Increases speed a monorail's Propulsion Platform 10%!"
+        },
+        "ImprovedMonorailTrainSpeed2": {
+          "name": "Improved Propulsion Platform Speed II",
+          "description": "Increases speed a monorail's Propulsion Platform 20%!"
+        },
+        "ImprovedMonorailTrainSpeed3": {
+          "name": "Improved Propulsion Platform Speed III",
+          "description": "Increases speed a monorail's Propulsion Platform 30%!"
+        },
+        "ImprovedMonorailTrainSpeed4": {
+          "name": "Improved Propulsion Platform Speed IV",
+          "description": "Increases speed a monorail's Propulsion Platform 40%!"
+        },
+        "ImprovedMonorailTrainSpeed5": {
+          "name": "Improved Propulsion Platform Speed V",
+          "description": "Increases speed a monorail's Propulsion Platform 50%!"
+        },
+        "ImprovedMonorailTrainDistance1": {
+          "name": "Improved Monorail Train Distance I",
+          "description": "Increases range a monorail's Propulsion Platform can travel to 1500 blocks on a single tank of mana!"
+        },
+        "ImprovedMonorailTrainDistance2": {
+          "name": "Improved Monorail Train Distance II",
+          "description": "Increases range a monorail's Propulsion Platform can travel to 2000 blocks on a single tank of mana!"
+        },
+        "ImprovedMonorailTrainDistance3": {
+          "name": "Improved Monorail Train Distance III",
+          "description": "Increases range a monorail's Propulsion Platform can travel to 2500 blocks on a single tank of mana!"
+        },
+        "ImprovedMonorailTrainDistance4": {
+          "name": "Improved Monorail Train Distance IV",
+          "description": "Increases range a monorail's Propulsion Platform can travel to 3000 blocks on a single tank of mana!"
+        },
+        "ImprovedMonorailTrainDistance5": {
+          "name": "Improved Monorail Train Distance V",
+          "description": "Increases range a monorail's Propulsion Platform can travel to 3500 blocks on a single tank of mana!"
+        },
+        "ImprovedManaCapacity1": {
+          "name": "Improved Mana Capacity I",
+          "description": "Increases Mana Tank capacity by 100%. Mana Tanks will need their mana filled less often. Effects mana machines and mana tanks."
+        },
+        "ImprovedManaCapacity2": {
+          "name": "Improved Mana Capacity II",
+          "description": "Increases Mana Tank capacity by 200%. Mana Tanks will need their mana filled less often. Effects mana machines and mana tanks."
+        },
+        "ImprovedManaCapacity3": {
+          "name": "Improved Mana Capacity III",
+          "description": "Increases Mana Tank capacity by 300%. Mana Tanks will need their mana filled less often. Effects mana machines and mana tanks."
+        },
+        "ImprovedManaCapacity4": {
+          "name": "Improved Mana Capacity IV",
+          "description": "Increases Mana Tank capacity by 400%. Mana Tanks will need their mana filled less often. Effects mana machines and mana tanks."
+        },
+        "ImprovedManaCapacity5": {
+          "name": "Improved Mana Capacity V",
+          "description": "Increases Mana Tank capacity by 500%. Mana Tanks will need their mana filled less often. Effects mana machines and mana tanks."
+        },
         "Artificer1": {
           "name": "Artificer",
-          "description": "Artificer open up magical machines that run on mana and the Artificer job to maintain them!"
+          "description": "Artificers opens up magical machines that run on mana and the Artificer job to maintain them! Machines are crafted in the advanced crafter."
         },
         "Backpack1": {
           "name": "Backpack",
           "description": "Gives you a backpack that you can carry items in."
         },
         "SkillEquiptmentResearch1": {
-          "name": "+1 Skill Equiptment",
-          "description": "Allows you to craft +1 skill equiptment."
+          "name": "+1 Skill Equipment",
+          "description": "Allows you to craft +1 skill equipment."
         },
         "SkillEquiptmentResearch2": {
-          "name": "+2 Skill Equiptment",
-          "description": "Allows you to craft +2 skill equiptment."
+          "name": "+2 Skill Equipment",
+          "description": "Allows you to craft +2 skill equipment."
         },
         "MaxMagicItems1": {
           "name": "Max Magic Items",

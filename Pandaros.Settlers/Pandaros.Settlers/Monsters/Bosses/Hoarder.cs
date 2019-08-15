@@ -1,7 +1,9 @@
 ﻿using AI;
 using Monsters;
 using NPC;
-using Pandaros.Settlers.Entities;
+using Pandaros.API;
+using Pandaros.API.Entities;
+using Pandaros.API.Monsters;
 using Pipliz.JSON;
 using System.Collections.Generic;
 
@@ -29,14 +31,14 @@ namespace Pandaros.Settlers.Monsters.Bosses
             CurrentHealth = _totalHealth;
         }
 
-        public IPandaBoss GetNewBoss(Path path, Colony p)
+        public IPandaZombie GetNewInstance(Path path, Colony p)
         {
             return new Hoarder(path, p);
         }
 
         public string AnnouncementText => "FEAR THE ZOMBIE HORDE!";
         public string DeathText => "Gughghgugggghrrrghghgfggg......";
-
+        public int MinColonists => 150;
         public string name => "Hoarder";
 
         public override float TotalHealth => _totalHealth;
@@ -51,7 +53,7 @@ namespace Pandaros.Settlers.Monsters.Bosses
 
         public float ZombieMultiplier => 1.2f;
         public float ZombieHPBonus => 0;
-        public string LootTableName => BossLoot.LootTableName;
+        public string MosterType => "Boss";
 
         public Dictionary<DamageType, float> Damage { get; } = new Dictionary<DamageType, float>
         {

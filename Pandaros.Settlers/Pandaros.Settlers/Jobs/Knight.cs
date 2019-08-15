@@ -1,16 +1,14 @@
 ﻿using AI;
-using BlockTypes;
 using Jobs;
 using Monsters;
 using NPC;
-using Pandaros.Settlers.Entities;
-using Pandaros.Settlers.Items;
-using Pandaros.Settlers.Items.Armor;
-using Pandaros.Settlers.Items.Weapons;
-using Pandaros.Settlers.Models;
-using Pandaros.Settlers.Research;
+using Pandaros.API;
+using Pandaros.API.Entities;
+using Pandaros.API.Items.Armor;
+using Pandaros.API.Items.Weapons;
+using Pandaros.API.Models;
+using Pandaros.API.Research;
 using Pipliz;
-using Pipliz.Collections;
 using Science;
 using Shared;
 using System;
@@ -32,8 +30,8 @@ namespace Pandaros.Settlers.Jobs
                 0,
                 new List<IResearchableCondition>()
                 {
-                    new ColonistCountCondition() { Threshold = 50 },
-                    new HappinessCondition() { Threshold = 50 }
+                    new ColonistCountCondition() { Threshold = 25 },
+                    new HappinessCondition() { Threshold = 30 }
                 }
             }
         };
@@ -86,8 +84,8 @@ namespace Pandaros.Settlers.Jobs
         }
 
         [ModLoader.ModCallback(ModLoader.EModCallbackType.OnNPCHit, GameLoader.NAMESPACE + ".Jobs.Knight.OnNPCHit")]
-        [ModLoader.ModCallbackProvidesFor(GameLoader.NAMESPACE + ".Armor.OnNPCHit")]
-        [ModLoader.ModCallbackDependsOn(GameLoader.NAMESPACE + ".Managers.MonsterManager.OnNPCHit")]
+        [ModLoader.ModCallbackProvidesFor("Pandaros.API.Armor.OnNPCHit")]
+        [ModLoader.ModCallbackDependsOn("Pandaros.API.Managers.MonsterManager.OnNPCHit")]
         public static void OnNPCHit(NPCBase npc, ModLoader.OnHitData box)
         {
             if (npc != null && npc.Job != null && npc.Job.GetType() == typeof(Knight))
@@ -110,8 +108,7 @@ namespace Pandaros.Settlers.Jobs
 
         private int _currentPatrolPos;
         private bool _forward = true;
-        private SettlerInventory _inv;
-        private Stockpile _stock;
+        private ColonistInventory _inv;
         private IMonster _target;
         private int _timeAtPatrol;
         private double _timeJob;
@@ -151,7 +148,7 @@ namespace Pandaros.Settlers.Jobs
         
         public NPCBase.NPCGoal CalculateGoal(ref NPCBase.NPCState state)
         {
-            var inv = SettlerInventory.GetSettlerInventory(UsedNPC);
+            var inv = ColonistInventory.Get(UsedNPC);
 
             if (!inv.Weapon.IsEmpty())
                 return NPCBase.NPCGoal.Job;
@@ -243,7 +240,7 @@ namespace Pandaros.Settlers.Jobs
                             flagType == PatrolTool.PatrolFlag.ItemIndex)
                         {
                             ServerManager.TryChangeBlock(flagPoint, ColonyBuiltIn.ItemTypes.AIR.Id);
-                            _stock.Add(PatrolTool.PatrolFlag.ItemIndex);
+                            UsedNPC.Colony.Stockpile.Add(PatrolTool.PatrolFlag.ItemIndex);
                         }
                 }
             }
@@ -253,15 +250,13 @@ namespace Pandaros.Settlers.Jobs
 
         public void OnNPCAtJob(ref NPCBase.NPCState state)
         {
+            state.SetCooldown(5);
             if (CheckTime() && UsedNPC != null)
             {
                 if (_inv == null)
-                    _inv = SettlerInventory.GetSettlerInventory(UsedNPC);
+                    _inv = ColonistInventory.Get(UsedNPC);
 
-                if (_stock == null)
-                    _stock = UsedNPC.Colony.Stockpile;
-
-                ArmorFactory.GetBestArmorForNPC(_stock, UsedNPC, _inv, 0);
+                ArmorFactory.GetBestArmorForNPC(UsedNPC.Colony.Stockpile, UsedNPC, _inv, 0);
 
                 try
                 {
@@ -289,7 +284,7 @@ namespace Pandaros.Settlers.Jobs
                 }
                 catch (Exception ex)
                 {
-                    PandaLogger.LogError(ex);
+                    SettlersLogger.LogError(ex);
                 }
             }
         }
@@ -297,6 +292,7 @@ namespace Pandaros.Settlers.Jobs
         public void OnNPCAtStockpile(ref NPCBase.NPCState state)
         {
             var hasItem = GetBestWeapon();
+            state.SetCooldown(5);
 
             if (!hasItem)
                 state.SetIndicator(new IndicatorState(COOLDOWN, WeaponFactory.WeaponLookup.FirstOrDefault().Key, true));
@@ -323,10 +319,7 @@ namespace Pandaros.Settlers.Jobs
                 if (UsedNPC != null)
                 {
                     if (_inv == null)
-                        _inv = SettlerInventory.GetSettlerInventory(UsedNPC);
-
-                    if (_stock == null)
-                        _stock = UsedNPC.Colony.Stockpile;
+                        _inv = ColonistInventory.Get(UsedNPC);
 
                     hasItem = !_inv.Weapon.IsEmpty();
                     IWeapon bestWeapon = null;
@@ -335,8 +328,8 @@ namespace Pandaros.Settlers.Jobs
                         bestWeapon = WeaponFactory.WeaponLookup[_inv.Weapon.Id];
 
                     foreach (var wep in WeaponFactory.WeaponLookup.Values.Where(w => w as IPlayerMagicItem == null && w is WeaponMetadata weaponMetadata && weaponMetadata.ItemType != null).Cast<WeaponMetadata>())
-                        if (_stock.Contains(wep.ItemType.ItemIndex) && bestWeapon == null ||
-                            _stock.Contains(wep.ItemType.ItemIndex) && bestWeapon != null &&
+                        if (UsedNPC.Colony.Stockpile.Contains(wep.ItemType.ItemIndex) && bestWeapon == null ||
+                            UsedNPC.Colony.Stockpile.Contains(wep.ItemType.ItemIndex) && bestWeapon != null &&
                             bestWeapon.Damage.TotalDamage() < wep.Damage.TotalDamage())
                             bestWeapon = wep;
 
@@ -346,10 +339,10 @@ namespace Pandaros.Settlers.Jobs
                         if (hasItem && _inv.Weapon.Id != wepId || !hasItem)
                         {
                             hasItem = true;
-                            _stock.TryRemove(wepId);
+                            UsedNPC.Colony.Stockpile.TryRemove(wepId);
 
                             if (!_inv.Weapon.IsEmpty())
-                                _stock.Add(_inv.Weapon.Id);
+                                UsedNPC.Colony.Stockpile.Add(_inv.Weapon.Id);
 
                             _inv.Weapon = new ItemState
                             {
@@ -362,7 +355,7 @@ namespace Pandaros.Settlers.Jobs
             }
             catch (Exception ex)
             {
-                PandaLogger.LogError(ex);
+                SettlersLogger.LogError(ex);
             }
 
             return hasItem;
@@ -382,8 +375,7 @@ namespace Pandaros.Settlers.Jobs
         public void SetNPC(NPCBase npc)
         {
             UsedNPC = npc;
-            _inv = SettlerInventory.GetSettlerInventory(npc);
-            _stock = npc.Colony.Stockpile;
+            _inv = ColonistInventory.Get(npc);
         }
 
         public void OnNPCCouldNotPathToGoal()

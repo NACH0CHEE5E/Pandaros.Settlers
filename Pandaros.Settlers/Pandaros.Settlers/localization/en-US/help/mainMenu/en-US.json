@@ -4,15 +4,37 @@
       "Settlers": {
         "Wiki": {
           "MainMenu": {
+            "Credits": "By Pandaros! Special Thanks to: Xweert for models and Khanx for help menu design!",
             "JobsHeader": "Jobs!",
             "Machinists": "Machinists",
             "Apothecary": "Apothecary",
+            "Conductor": "Train Conductor",
+            "AdvancedCrafter": "Advanced Crafter",
+            "Artificer": "Artificer",
+            "Sorcerer": "Sorcerer",
+            "Architect": "Architect",
             "Knights": "Knights",
+            "Research": "Research",
+            "Settlers": "Settlers",
+            "Difficulties": "Difficulties",
+            "BuildersWand": "Builders Wand",
+            "Bosses": "Bosses",
+            "Weapons": "Weapons",
+            "Food": "Food",
+            "Trains": "Trains",
+            "PlayerMagicItems": "Player Magic Items",
+            "ManaMachines": "Mana Machines",
+            "Ores": "Ores",
+            "Happiness": "Happiness",
             "Title": "Settlers Help",
             "FeaturesHeader": "Features!",
             "Machines": "Machines",
             "ChatCommands": "Chat Commands",
             "DamageMatrix": "Damage Matrix",
+            "About": "About",
+            "Armor": "Armor",
+            "PatchNotes": "Patch Notes",
+            "ModDetails": "The settlers mod is a mod that introduces a large verity of new features to the game. In addition to the ones listed above, settlers also provides:\r\n    * Placable block item stats by hovering over items in the stockpile \r\n    * Colony founding time in the colony menu /r/n",
             "ItemDetails": {
               "Pandaros": {
                 "Settlers": {

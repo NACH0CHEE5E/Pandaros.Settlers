@@ -1,10 +1,11 @@
-﻿using BlockTypes;
-using Chatting.Commands;
-using Pandaros.Settlers.Entities;
+﻿using Chatting.Commands;
+using Pandaros.API;
+using Pandaros.API.Entities;
+using Pandaros.API.Jobs.Roaming;
+using Pandaros.API.localization;
+using Pandaros.API.Models;
+using Pandaros.API.Research;
 using Pandaros.Settlers.Jobs;
-using Pandaros.Settlers.Jobs.Roaming;
-using Pandaros.Settlers.Models;
-using Pandaros.Settlers.Research;
 using Pipliz;
 using Pipliz.JSON;
 using Recipes;
@@ -82,6 +83,7 @@ namespace Pandaros.Settlers.Items.Machines
     {
         public string name => nameof(TeleportPad);
         public float WorkTime => 10;
+        public float WatchArea => 21;
         public ItemId ItemIndex => ItemId.GetItemId(TeleportPad.Item.ItemIndex);
         public Dictionary<string, IRoamingJobObjectiveAction> ActionCallbacks { get; } = new Dictionary<string, IRoamingJobObjectiveAction>()
         {
@@ -101,7 +103,7 @@ namespace Pandaros.Settlers.Items.Machines
     public class RepairTeleportPad : IRoamingJobObjectiveAction
     {
         public string name => MachineConstants.REPAIR;
-
+        public float ActionEnergyMinForFix => .5f;
         public float TimeToPreformAction => 10;
 
         public string AudioKey => GameLoader.NAMESPACE + ".HammerAudio";
@@ -117,7 +119,7 @@ namespace Pandaros.Settlers.Items.Machines
     public class ReloadTeleportPad : IRoamingJobObjectiveAction
     {
         public string name => MachineConstants.RELOAD;
-
+        public float ActionEnergyMinForFix => .5f;
         public float TimeToPreformAction => 5;
 
         public string AudioKey => GameLoader.NAMESPACE + ".ReloadingAudio";
@@ -133,7 +135,7 @@ namespace Pandaros.Settlers.Items.Machines
     public class RefuelTeleportPad : IRoamingJobObjectiveAction
     {
         public string name => MachineConstants.REFUEL;
-
+        public float ActionEnergyMinForFix => .5f;
         public float TimeToPreformAction => 4;
 
         public string AudioKey => GameLoader.NAMESPACE + ".ReloadingAudio";
@@ -152,6 +154,7 @@ namespace Pandaros.Settlers.Items.Machines
     {
         private static readonly Dictionary<Vector3Int, Vector3Int> _paired = new Dictionary<Vector3Int, Vector3Int>();
         private static readonly Dictionary<Players.Player, int> _cooldown = new Dictionary<Players.Player, int>();
+        private static LocalizationHelper _localizationHelper = new LocalizationHelper(GameLoader.NAMESPACE, "TeleportPad");
 
         public static ItemTypesServer.ItemTypeRaw Item { get; private set; }
 
@@ -251,18 +254,17 @@ namespace Pandaros.Settlers.Items.Machines
             if (!SettlersConfiguration.TeleportPadsRequireMachinists)
                 return;
 
-            if (!colony.OwnerIsOnline() && SettlersConfiguration.OfflineColonies || colony.OwnerIsOnline())
-                if (_paired.ContainsKey(machineState.Position) &&
-                    GetPadAt(_paired[machineState.Position], out var ms) &&
-                    machineState.GetActionEnergy(MachineConstants.REPAIR) > 0 &&
-                    machineState.GetActionEnergy(MachineConstants.REFUEL) > 0 &&
-                    machineState.NextTimeForWork < Time.SecondsSinceStartDouble)
-                {
-                    machineState.SubtractFromActionEnergy(MachineConstants.REPAIR, 0.01f);
-                    machineState.SubtractFromActionEnergy(MachineConstants.REFUEL, 0.05f);
+            if (_paired.ContainsKey(machineState.Position) &&
+                GetPadAt(_paired[machineState.Position], out var ms) &&
+                machineState.GetActionEnergy(MachineConstants.REPAIR) > 0 &&
+                machineState.GetActionEnergy(MachineConstants.REFUEL) > 0 &&
+                machineState.NextTimeForWork < Time.SecondsSinceStartDouble)
+            {
+                machineState.SubtractFromActionEnergy(MachineConstants.REPAIR, 0.01f);
+                machineState.SubtractFromActionEnergy(MachineConstants.REFUEL, 0.05f);
 
-                    machineState.NextTimeForWork = machineState.RoamingJobSettings.WorkTime + Time.SecondsSinceStartDouble;
-                }
+                machineState.NextTimeForWork = machineState.RoamingJobSettings.WorkTime + Time.SecondsSinceStartDouble;
+            }
         }
 
         [ModLoader.ModCallback(ModLoader.EModCallbackType.AfterItemTypesDefined, GameLoader.NAMESPACE + ".Items.Machines.TeleportPad.RegisterTeleportPad")]
@@ -361,18 +363,19 @@ namespace Pandaros.Settlers.Items.Machines
                 if (pos != null)
                     lock (RoamingJobManager.Objectives)
                     {
-                        foreach (var p in RoamingJobManager.Objectives)
-                            if (p.Value.ContainsKey(pos))
-                                if (p.Value[pos].RoamObjective == nameof(TeleportPad))
-                                {
-                                    state = p.Value[pos];
-                                    return true;
-                                }
+                        foreach (var kvp in RoamingJobManager.Objectives)
+                            foreach (var p in kvp.Value)
+                                if (p.Value.TryGetValue(pos, out var roamingJobState))
+                                    if (roamingJobState.RoamObjective == SettlersBuiltIn.ItemTypes.TELEPORTPAD)
+                                    {
+                                        state = p.Value[pos];
+                                        return true;
+                                    }
                     }
             }
             catch (Exception ex)
             {
-                PandaLogger.LogError(ex);
+                SettlersLogger.LogError(ex);
             }
 
             state = null;
@@ -399,13 +402,13 @@ namespace Pandaros.Settlers.Items.Machines
 
         private static void Save()
         {
-            if (string.IsNullOrEmpty(RoamingJobManager.MACHINE_JSON))
+            if (string.IsNullOrEmpty(GameLoader.MACHINE_JSON))
                 return;
 
             JSONNode n = null;
             
-            if (File.Exists(RoamingJobManager.MACHINE_JSON))
-                JSON.Deserialize(RoamingJobManager.MACHINE_JSON, out n);
+            if (File.Exists(GameLoader.MACHINE_JSON))
+                JSON.Deserialize(GameLoader.MACHINE_JSON, out n);
 
             if (n == null)
                 n = new JSONNode();
@@ -425,7 +428,7 @@ namespace Pandaros.Settlers.Items.Machines
 
             n[GameLoader.NAMESPACE + ".Teleportpads"] = teleporters;
 
-            using (var writer = File.CreateText(RoamingJobManager.MACHINE_JSON))
+            using (var writer = File.CreateText(GameLoader.MACHINE_JSON))
             {
                 n.Serialize(writer, 1, 1);
             }
@@ -434,8 +437,8 @@ namespace Pandaros.Settlers.Items.Machines
         [ModLoader.ModCallback(ModLoader.EModCallbackType.AfterWorldLoad, GameLoader.NAMESPACE + ".Items.Machines.Teleportpad.AfterWorldLoad")]
         public static void AfterWorldLoad()
         {
-            if (File.Exists(RoamingJobManager.MACHINE_JSON) &&
-                JSON.Deserialize(RoamingJobManager.MACHINE_JSON, out var n) &&
+            if (File.Exists(GameLoader.MACHINE_JSON) &&
+                JSON.Deserialize(GameLoader.MACHINE_JSON, out var n) &&
                 n.TryGetChild(GameLoader.NAMESPACE + ".Teleportpads", out var teleportPads))
                 foreach (var pad in teleportPads.LoopArray())
                     _paired[(Vector3Int)pad.GetAs<JSONNode>("Key")] = (Vector3Int)pad.GetAs<JSONNode>("Value");
@@ -462,13 +465,13 @@ namespace Pandaros.Settlers.Items.Machines
                     {
                         if (machineState.GetActionEnergy(MachineConstants.REPAIR) <= 0)
                         {
-                            PandaChat.Send(p, "This teleporter is in need of repair. Make sure a machinist is near by to maintain it!", ChatColor.red);
+                            PandaChat.Send(p, _localizationHelper, "NeedsRepair", ChatColor.red);
                             return;
                         }
 
                         if (machineState.GetActionEnergy(MachineConstants.REFUEL) <= 0)
                         {
-                            PandaChat.Send(p, "This teleporter is in need of mana. Make sure a machinist is near by to maintain it!", ChatColor.red);
+                            PandaChat.Send(p, _localizationHelper, "", ChatColor.red);
                             return;
                         }
 
@@ -481,7 +484,7 @@ namespace Pandaros.Settlers.Items.Machines
             }
             catch (Exception ex)
             {
-                PandaLogger.LogError(ex);
+                SettlersLogger.LogError(ex);
             }
         }
 
@@ -494,13 +497,13 @@ namespace Pandaros.Settlers.Items.Machines
             if (d.TypeNew.ItemIndex == Item.ItemIndex && d.TypeOld.ItemIndex == ColonyBuiltIn.ItemTypes.AIR.Id)
             {
                 var ps = PlayerState.GetPlayerState(d.RequestOrigin.AsPlayer);
-                var ms = new RoamingJobState(d.Position, d.RequestOrigin.AsPlayer.ActiveColony, nameof(TeleportPad));
+                var ms = new RoamingJobState(d.Position, d.RequestOrigin.AsPlayer.ActiveColony, Item.name);
 
                 if (ps.TeleporterPlaced == Vector3Int.invalidPos)
                 {
                     ps.TeleporterPlaced = d.Position;
 
-                    PandaChat.Send(d.RequestOrigin.AsPlayer, $"Place one more teleportation pad to link to.",
+                    PandaChat.Send(d.RequestOrigin.AsPlayer, _localizationHelper, "PlaceAnotherTeleporter",
                                    ChatColor.orange);
                 }
                 else
@@ -509,15 +512,14 @@ namespace Pandaros.Settlers.Items.Machines
                     {
                         _paired[ms.Position]           = machineState.Position;
                         _paired[machineState.Position] = ms.Position;
-                        PandaChat.Send(d.RequestOrigin.AsPlayer, $"Teleportation pads linked!", ChatColor.orange);
+                        PandaChat.Send(d.RequestOrigin.AsPlayer, _localizationHelper, "TeleportersLinked", ChatColor.orange);
                         ps.TeleporterPlaced = Vector3Int.invalidPos;
                     }
                     else
                     {
                         ps.TeleporterPlaced = d.Position;
 
-                        PandaChat.Send(d.RequestOrigin.AsPlayer, $"Place one more teleportation pad to link to.",
-                                       ChatColor.orange);
+                        PandaChat.Send(d.RequestOrigin.AsPlayer, _localizationHelper, "PlaceAnotherTeleporter", ChatColor.orange);
                     }
                 }
             }
@@ -528,7 +530,7 @@ namespace Pandaros.Settlers.Items.Machines
             var machineState = sender as RoamingJobState;
 
             if (machineState != null &&
-                machineState.RoamObjective == nameof(TeleportPad))
+                machineState.RoamObjective == SettlersBuiltIn.ItemTypes.TELEPORTPAD)
             {
                 if (_paired.ContainsKey(machineState.Position) &&
                     GetPadAt(_paired[machineState.Position], out var paired))

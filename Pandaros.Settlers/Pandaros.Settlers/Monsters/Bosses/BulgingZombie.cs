@@ -1,7 +1,9 @@
 ﻿using AI;
 using Monsters;
 using NPC;
-using Pandaros.Settlers.Entities;
+using Pandaros.API;
+using Pandaros.API.Entities;
+using Pandaros.API.Monsters;
 using Pipliz;
 using Pipliz.JSON;
 using System.Collections.Generic;
@@ -29,7 +31,7 @@ namespace Pandaros.Settlers.Monsters.Bosses
             CurrentHealth = _totalHealth;
         }
 
-        public IPandaBoss GetNewBoss(Path path, Colony p)
+        public IPandaZombie GetNewInstance(Path path, Colony p)
         {
             return new Bulging(path, p);
         }
@@ -38,7 +40,7 @@ namespace Pandaros.Settlers.Monsters.Bosses
         public string DeathText => "Boom.";
 
         public string name => "Bulging";
-
+        public int MinColonists => 150;
         public override float TotalHealth => _totalHealth;
 
         public bool KilledBefore
@@ -51,7 +53,6 @@ namespace Pandaros.Settlers.Monsters.Bosses
 
         public float ZombieMultiplier => 1f;
         public float ZombieHPBonus => 20;
-        public string LootTableName => BossLoot.LootTableName;
 
         public Dictionary<DamageType, float> Damage { get; } = new Dictionary<DamageType, float>
         {
@@ -67,6 +68,8 @@ namespace Pandaros.Settlers.Monsters.Bosses
         };
 
         public float MissChance => 0.05f;
+
+        public string MosterType => "Boss";
 
         [ModLoader.ModCallback(ModLoader.EModCallbackType.OnUpdate, GameLoader.NAMESPACE + ".Monsters.Bosses.Bulging.OnUpdate")]
         public void OnUpdate()

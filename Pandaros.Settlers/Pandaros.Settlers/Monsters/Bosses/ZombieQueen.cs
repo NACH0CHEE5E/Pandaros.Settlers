@@ -1,8 +1,9 @@
 ﻿using AI;
 using Monsters;
 using NPC;
-using Pandaros.Settlers.Entities;
-using Pipliz;
+using Pandaros.API;
+using Pandaros.API.Entities;
+using Pandaros.API.Monsters;
 using Pipliz.JSON;
 using System.Collections.Generic;
 using System.Reflection;
@@ -32,7 +33,7 @@ namespace Pandaros.Settlers.Monsters.Bosses
             CurrentHealth = _totalHealth;
         }
 
-        public IPandaBoss GetNewBoss(Path path, Colony p)
+        public IPandaZombie GetNewInstance(Path path, Colony p)
         {
             return new ZombieQueen(path, p);
         }
@@ -67,8 +68,9 @@ namespace Pandaros.Settlers.Monsters.Bosses
         public DamageType ElementalArmor => DamageType.Water;
 
         public Dictionary<DamageType, float> AdditionalResistance { get; } = new Dictionary<DamageType, float>();
+        public string MosterType => "Boss";
 
-        public string LootTableName => BossLoot.LootTableName;
+        public int MinColonists => 150;
 
         public override bool Update()
         {
@@ -81,13 +83,13 @@ namespace Pandaros.Settlers.Monsters.Bosses
         {
             killedBefore = false;
 
-            if (_updateTime < Time.SecondsSinceStartDouble)
+            if (_updateTime < Pipliz.Time.SecondsSinceStartDouble)
             {
                 var alreadyTeleported = new List<IMonster>();
                 var ps = ColonyState.GetColonyState(OriginalGoal);
                 var rank = ps.Difficulty.Rank;
-                var teleportHP = ps.Difficulty.ZombieQueenTargetTeleportHp;
-                var cooldown = ps.Difficulty.ZombieQueenTargetTeleportCooldownSeconds;
+                var teleportHP = ps.Difficulty.GetorDefault("ZombieQueenTargetTeleportHp", 100);
+                var cooldown = ps.Difficulty.GetorDefault("ZombieQueenTargetTeleportCooldownSeconds", 5);
 
 
                 for (var i = 0; i < rank - 1; i++)
@@ -125,7 +127,7 @@ namespace Pandaros.Settlers.Monsters.Bosses
                     }
                 }
 
-                _updateTime = Time.SecondsSinceStartDouble + cooldown;
+                _updateTime = Pipliz.Time.SecondsSinceStartDouble + cooldown;
             }
         }
 

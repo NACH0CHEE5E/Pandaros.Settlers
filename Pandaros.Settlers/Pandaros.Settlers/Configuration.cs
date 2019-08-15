@@ -1,6 +1,9 @@
 ﻿using Chatting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Pandaros.API;
+using Pandaros.API.Entities;
+using Pandaros.API.localization;
 using Pipliz.JSON;
 using System;
 using System.Collections.Generic;
@@ -11,47 +14,7 @@ namespace Pandaros.Settlers
     [ModLoader.ModManager]
     public static class SettlersConfiguration
     {
-        private static CSModConfiguration _configuration = new CSModConfiguration(GameLoader.NAMESPACE);
-
-        public static GameDifficulty MinDifficulty
-        {
-            get
-            {
-                var diffStr = GetorDefault(nameof(MinDifficulty), GameDifficulty.Normal.Name);
-
-                if (GameDifficulty.GameDifficulties.ContainsKey(diffStr))
-                    return GameDifficulty.GameDifficulties[diffStr];
-
-                return GameDifficulty.Normal;
-            }
-            private set => SetValue(nameof(MinDifficulty), value);
-        }
-
-        public static GameDifficulty DefaultDifficulty
-        {
-            get
-            {
-                var diffStr = GetorDefault(nameof(DefaultDifficulty), GameDifficulty.Medium.Name);
-
-                if (GameDifficulty.GameDifficulties.ContainsKey(diffStr))
-                    return GameDifficulty.GameDifficulties[diffStr];
-
-                return GameDifficulty.Medium;
-            }
-            private set => SetValue(nameof(DefaultDifficulty), value);
-        }
-
-        public static bool DifficutlyCanBeChanged
-        {
-            get => GetorDefault(nameof(DifficutlyCanBeChanged), true);
-            private set => SetValue(nameof(DifficutlyCanBeChanged), value);
-        }
-
-        public static bool OfflineColonies
-        {
-            get => GetorDefault(nameof(OfflineColonies), true);
-            private set => SetValue(nameof(OfflineColonies), value);
-        }
+        public static CSModConfiguration Configuration { get; set; } = new CSModConfiguration(GameLoader.NAMESPACE);
 
         public static bool TeleportPadsRequireMachinists
         {
@@ -61,7 +24,7 @@ namespace Pandaros.Settlers
 
         public static bool HasSetting(string setting)
         {
-            return _configuration.HasSetting(setting);
+            return Configuration.HasSetting(setting);
         }
 
 
@@ -71,108 +34,91 @@ namespace Pandaros.Settlers
         {
             try
             {
-                Reload();
+                Configuration.Reload();
                 GetorDefault("BossesCanBeDisabled", true);
                 GetorDefault("MaxSettlersToggle", 4);
                 GetorDefault("SettlersEnabled", true);
                 GetorDefault("ColonistsRecruitment", true);
                 GetorDefault("AllowPlayerToResetThemself", true);
                 GetorDefault("CompoundingFoodRecruitmentCost", 5);
-                Save();
+
+                GameDifficulty.Easy.GetorDefault("ZombieQueenTargetTeleportHp", 100);
+                GameDifficulty.Easy.GetorDefault("BossHPPerColonist", 50);
+                GameDifficulty.Easy.GetorDefault("ZombieQueenTargetTeleportCooldownSeconds", 5);
+                GameDifficulty.Easy.GetorDefault("AdditionalChance ", .4);
+                GameDifficulty.Easy.GetorDefault("UnhappinessPerColonistDeath", 1);
+                GameDifficulty.Easy.GetorDefault("UnhappyGuardsMultiplyRate", .5);
+                GameDifficulty.Easy.GetorDefault("MonsterHPPerColonist", .2);
+                GameDifficulty.Easy.GetorDefault("UnhappyColonistsBought", -1);
+                GameDifficulty.Easy.GetorDefault("FoodMultiplier", 1);
+
+                GameDifficulty.Medium.GetorDefault("ZombieQueenTargetTeleportHp", 300);
+                GameDifficulty.Medium.GetorDefault("BossHPPerColonist", 70);
+                GameDifficulty.Medium.GetorDefault("ZombieQueenTargetTeleportCooldownSeconds", 4);
+                GameDifficulty.Medium.GetorDefault("AdditionalChance ", 0);
+                GameDifficulty.Medium.GetorDefault("UnhappinessPerColonistDeath", 2);
+                GameDifficulty.Medium.GetorDefault("UnhappyGuardsMultiplyRate", 1);
+                GameDifficulty.Medium.GetorDefault("MonsterHPPerColonist", .5);
+                GameDifficulty.Medium.GetorDefault("UnhappyColonistsBought", -2);
+                GameDifficulty.Medium.GetorDefault("FoodMultiplier", 1.25);
+
+                GameDifficulty.Hard.GetorDefault("ZombieQueenTargetTeleportHp", 500);
+                GameDifficulty.Hard.GetorDefault("BossHPPerColonist", 80);
+                GameDifficulty.Hard.GetorDefault("ZombieQueenTargetTeleportCooldownSeconds", 3);
+                GameDifficulty.Hard.GetorDefault("AdditionalChance ", -.2);
+                GameDifficulty.Hard.GetorDefault("UnhappinessPerColonistDeath", 3);
+                GameDifficulty.Hard.GetorDefault("UnhappyGuardsMultiplyRate", 1.5);
+                GameDifficulty.Hard.GetorDefault("MonsterHPPerColonist", 1);
+                GameDifficulty.Hard.GetorDefault("UnhappyColonistsBought", -3);
+                GameDifficulty.Hard.GetorDefault("FoodMultiplier", 1.5);
+
+                GameDifficulty.Insane.GetorDefault("ZombieQueenTargetTeleportHp", 500);
+                GameDifficulty.Insane.GetorDefault("BossHPPerColonist", 100);
+                GameDifficulty.Insane.GetorDefault("ZombieQueenTargetTeleportCooldownSeconds", 3);
+                GameDifficulty.Insane.GetorDefault("AdditionalChance ", -.4);
+                GameDifficulty.Insane.GetorDefault("UnhappinessPerColonistDeath", 4);
+                GameDifficulty.Insane.GetorDefault("UnhappyGuardsMultiplyRate", 2);
+                GameDifficulty.Insane.GetorDefault("MonsterHPPerColonist", 2);
+                GameDifficulty.Insane.GetorDefault("UnhappyColonistsBought", -5);
+                GameDifficulty.Insane.GetorDefault("FoodMultiplier", 2);
+
+                Configuration.Save();
             }
             catch (Exception ex)
             {
-                PandaLogger.LogError(ex);
+                SettlersLogger.LogError(ex);
             }
-        }
-
-        public static void Reload()
-        {
-            if (File.Exists(_configuration.SaveFile) && JSON.Deserialize(_configuration.SaveFile, out var config))
-            {
-                _configuration.SettingsRoot = config;
-
-                if (config.TryGetAs("GameDifficulties", out JSONNode diffs) && diffs.NodeType == NodeType.Array)
-                    foreach (var diff in diffs.LoopArray())
-                    {
-                        var newDiff = diff.JsonDeerialize<GameDifficulty>();
-                        GameDifficulty.GameDifficulties[newDiff.Name] = newDiff;
-                    }
-            }
-        }
-
-        public static void Save()
-        {
-            var diffs = new JSONNode(NodeType.Array);
-
-            foreach (var diff in GameDifficulty.GameDifficulties.Values)
-                diffs.AddToArray(diff.ToJson());
-
-            _configuration.SettingsRoot.SetAs("GameDifficulties", diffs);
-
-            _configuration.Save();
         }
 
         public static T GetorDefault<T>(string key, T defaultVal)
         {
-            return _configuration.GetorDefault(key, defaultVal);
+            return Configuration.GetorDefault(key, defaultVal);
         }
 
         public static void SetValue<T>(string key, T val)
         {
-            _configuration.SetValue(key, val);
+            Configuration.SetValue(key, val);
+        }
+
+        [ModLoader.ModCallback(ModLoader.EModCallbackType.AfterWorldLoad, GameLoader.NAMESPACE + ".GameDifficulty.AfterWorldLoad")]
+        public static void AfterWorldLoad()
+        {
+            foreach (var colony in ServerManager.ColonyTracker.ColoniesByID.Values)
+            {
+                var cs = ColonyState.GetColonyState(colony);
+
+                if (cs != null && cs.Difficulty.Rank < APIConfiguration.MinDifficulty.Rank)
+                    cs.Difficulty = APIConfiguration.MinDifficulty;
+            }
         }
     }
 
-
-    public class CSModConfiguration
-    {
-        public string SaveFile { get; }
-        public JSONNode SettingsRoot { get; set; }
-
-        public CSModConfiguration(string configurationFileName)
-        {
-            SaveFile = $"{GameLoader.SAVE_LOC}/{configurationFileName}.json";
-
-            if (File.Exists(SaveFile))
-                SettingsRoot = JSON.Deserialize(SaveFile);
-            else
-                SettingsRoot = new JSONNode();
-        }
-
-        public void Reload()
-        {
-            if (File.Exists(SaveFile) && JSON.Deserialize(SaveFile, out var config))
-                SettingsRoot = config;
-        }
-
-        public void Save()
-        {
-            JSON.Serialize(SaveFile, SettingsRoot);
-        }
-
-        public bool HasSetting(string setting)
-        {
-            return SettingsRoot.HasChild(setting);
-        }
-
-        public T GetorDefault<T>(string key, T defaultVal)
-        {
-            if (!SettingsRoot.HasChild(key))
-                SetValue(key, defaultVal);
-
-            return SettingsRoot.GetAs<T>(key);
-        }
-
-        public void SetValue<T>(string key, T val)
-        {
-            SettingsRoot.SetAs<T>(key, val);
-            Save();
-        }
-    }
 
     public class ConfigurationChatCommand : IChatCommand
     {
+
+        private static LocalizationHelper _localizationHelper = new LocalizationHelper(GameLoader.NAMESPACE, "Configuration");
+
         public bool TryDoCommand(Players.Player player, string chat, List<string> split)
         {
             if (!chat.StartsWith("/settlersconfig", StringComparison.OrdinalIgnoreCase))
@@ -199,12 +145,12 @@ namespace Pandaros.Settlers
                     }
                     else
                     {
-                        PandaChat.Send(player, $"The configuration {array[1]} does not exist.", ChatColor.red);
+                        PandaChat.Send(player, _localizationHelper, "UnknownConfiguration", ChatColor.red, array[1]);
                     }
                 }
                 else
                 {
-                    SettlersConfiguration.Reload();
+                    SettlersConfiguration.Configuration.Reload();
                 }
             }
 

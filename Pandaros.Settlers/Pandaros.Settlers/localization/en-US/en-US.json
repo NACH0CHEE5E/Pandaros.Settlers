@@ -1,5 +1,9 @@
 {
   "types": {
+    "Pandaros.Settlers.GoldCube": "Golden Lamp",
+    "Pandaros.Settlers.TrainStation": "Train Station",
+    "Pandaros.Settlers.Monorail": "Monorail",
+    "Pandaros.Settlers.PropulsionPlatform": "Propulsion Platform",
     "Pandaros.Settlers.ManaPump": "Mana Pump",
     "Pandaros.Settlers.ManaPipe": "Mana Pipe",
     "Pandaros.Settlers.ManaTank": "Mana Tank",
@@ -89,7 +93,6 @@
     "Pandaros.Settlers.SorcererTable": "Sorcerer Table",
     "Pandaros.Settlers.Apothecary": "Apothecary",
     "Pandaros.Settlers.Anitbiotic": "Antibiotic",
-    "Pandaros.Settlers.Antidote": "Antidote",
     "Pandaros.Settlers.Bandage": "Bandage",
     "Pandaros.Settlers.Mana": "Mana",
     "Pandaros.Settlers.TeleportPad": "Teleporter",
@@ -110,7 +113,6 @@
     "Pandaros.Settlers.VoidTurret": "Void Turret",
     "Pandaros.Settlers.HelpMenu": "Settlers! Mod Help",
     "Pandaros.Settlers.SchematicTool": "Settlers! Schematic Tool",
-    "Pandaros.Settlers.ColonyManagementTool": "Colony Management Tool",
     "Pandaros.Settlers.Sorcerer": "Sorcerer",
     "Pandaros.Settlers.Healthbooster": "Health Booster",
     "Pandaros.Settlers.BootsOfFalling": "Boots Of Falling",
@@ -122,9 +124,6 @@
     "Pandaros.Settlers.AutoLoad.rawemerald": "Raw Emerald",
     "Pandaros.Settlers.AutoLoad.refinedemerald": "Cut Emerald",
     "Pandaros.Settlers.AutoLoad.infiniteemerald": "Emerald Ore",
-    "Pandaros.Settlers.AutoLoad.egg": "Egg",
-    "Pandaros.Settlers.AutoLoad.milk": "Milk",
-    "Pandaros.Settlers.AutoLoad.cake": "Cake",
     "Pandaros.Settlers.AutoLoad.lamp": "Lamp",
     "Pandaros.Settlers.AutoLoad.ironbar": "Iron Bar",
     "Pandaros.Settlers.AutoLoad.ironbarcorner": "Iron Bar Corner",
@@ -190,9 +189,6 @@
     "Pandaros.Settlers.AutoLoad.notwater": "Water",
     "Pandaros.Settlers.AutoLoad.marblebricks": "Marble Bricks",
     "Pandaros.Settlers.AutoLoad.sledgehammer": "Sledge Hammer",
-    "Pandaros.Settlers.AutoLoad.beef": "Beef",
-    "Pandaros.Settlers.AutoLoad.cheese": "Cheese",
-    "Pandaros.Settlers.AutoLoad.carrot": "Carrot",
     "Pandaros.Settlers.AutoLoad.hammer": "Hammer",
     "Pandaros.Settlers.AutoLoad.saw": "Saw",
     "Pandaros.Settlers.AutoLoad.carpenter": "Carpenter",
@@ -273,14 +269,17 @@
     "Pandaros.Settlers.AutoLoad.berrybushslab": "Berry Bush Slab",
     "Pandaros.Settlers.AutoLoad.lava": "Lava",
     "Pandaros.Settlers.AutoLoad.lavaslab": "Lava Slab",
-    "Pandaros.Settlers.AutoLoad.aloe": "Aloe",
-    "Pandaros.Settlers.AutoLoad.tulip": "Tulip",
-    "Pandaros.Settlers.AutoLoad.daisy": "Daisy",
-    "Pandaros.Settlers.AutoLoad.Sunflower": "Sunflower",
-    "Pandaros.Settlers.AutoLoad.rose": "Rose",
-    "Pandaros.Settlers.AutoLoad.Flowers1": "Morning Glory"
   },
   "typeuses": {
+    "Pandaros.Settlers.GoldCube": "Needs Mana! Connect a mana pipe to it! Colonists love its glow! Provides +10 happiness while running!",
+    "Pandaros.Settlers.TrainStation": "Place next to monorail. Must be powered by mana pipes. Adds a stop for Propulsion Platform to refuel.",
+    "Pandaros.Settlers.Monorail": "Rails for Propulsion Platform. Must have at least 1 station to power the Propulsion Platform.",
+    "Pandaros.Settlers.PropulsionPlatform": "Place on monorial. Right click to ride and get off! Stops at stations to refuel. May have more than one per railsystem.",
+    "Pandaros.Settlers.ManaPump": "Mana Pump! Connect a pipe to the front and let it flow! Needs Mana tanks next to, behind or on top of it.",
+    "Pandaros.Settlers.ManaPipe": "Mana Pipe! Connect to a mana pump and add plumbing to mana machines! Mana machines need to be connected to pipes that are connected to a pump!",
+    "Pandaros.Settlers.ManaTank": "Mana Tank! Place next to, on top of or behind a mana pump. Cannot deliver mana with pipes alone. Needs a pump to operate.",
+    "Pandaros.Settlers.MagicWand": "Magic Wand! Used in the repair and creation of magical machines!",
+    "Pandaros.Settlers.ArtificerBench": "Creates and maintains magical machines!",
     "Pandaros.Settlers.Backpack": "To use: place it on your toolbar and right click. Your own personal stockpile!",
     "Pandaros.Settlers.CopperHelm": "Provides 5% damage reduction.",
     "Pandaros.Settlers.CopperChest": "Provides 10% damage reduction.",
@@ -332,10 +331,10 @@
     "Pandaros.Settlers.Miner": "A good machine! Requires a good supply of wood or coal. Crank to start!",
     "Pandaros.Settlers.MachinistBench": "Machinists need this bench to repair machines on. The Machinist monitors all machies within 20 blocks of the bench. Only works durning the day.",
     "Pandaros.Settlers.NightMachinistBench": "Machinists need this bench to repair machines on. The Machinist monitors all machies within 20 blocks of the bench. Only works at night.",
-    "Pandaros.Settlers.StoneTurret": "50 Physical Damage per shot. Fires a little slower than a Colonist.",
-    "Pandaros.Settlers.BronzeArrowTurret": "100 Physical Damage per shot. Fires a little slower than a Colonist.",
-    "Pandaros.Settlers.CrossbowTurret": "300 Physical Damage per shot. Fires a little slower than a Colonist.",
-    "Pandaros.Settlers.MatchlockTurret": "500 Physical Damage per shot. Fires a little slower than a Colonist.",
+    "Pandaros.Settlers.StoneTurret": "50 Physical Damage per shot. Fires a little slower than a Colonist. Same range as colonist.",
+    "Pandaros.Settlers.BronzeArrowTurret": "100 Physical Damage per shot. Fires a little slower than a Colonist. Same range as colonist.",
+    "Pandaros.Settlers.CrossbowTurret": "300 Physical Damage per shot. Fires a little slower than a Colonist. Same range as colonist.",
+    "Pandaros.Settlers.MatchlockTurret": "500 Physical Damage per shot. Fires a little slower than a Colonist. Same range as colonist.",
     "Pandaros.Settlers.GateLever": "Opens all Iron Gates within 20 blocks of it automatically every morning, and closes them every night. Needs a Machinist to maintain it.",
     "Pandaros.Settlers.Gate": "Iron Gate. Needs a Gate Lever to open.",
     "Pandaros.Settlers.ApothecaryTable": "Used to make medicines, bandages and magical reagents such as mana.",
@@ -353,14 +352,13 @@
     "Pandaros.Settlers.WaterStone": "Harness the power of water!",
     "Pandaros.Settlers.Esper": "Very difficult to capture during the creation of mana. A very powerful reagent for only the most powerful of magical things.",
     "Pandaros.Settlers.Void": "Rare byproduct from Elementium. Who knows all it's uses...",
-    "Pandaros.Settlers.AirTurret": "Air Turret deals 400 air damage and 100 physical damage per shot.",
-    "Pandaros.Settlers.EarthTurret": "Earth Turret deals 400 earth damage and 100 physical damage per shot.",
-    "Pandaros.Settlers.FireTurret": "Fire Turret deals 400 fire damage and 100 physical damage per shot.",
-    "Pandaros.Settlers.WaterTurret": "Water Turret deals 400 water damage and 100 physical damage per shot.",
-    "Pandaros.Settlers.VoidTurret": "Void Turret  deals 400 void damage and 100 physical damage per shot.",
+    "Pandaros.Settlers.AirTurret": "Air Turret deals 400 air damage and 100 physical damage per shot. Same range as matchlock colonist.",
+    "Pandaros.Settlers.EarthTurret": "Earth Turret deals 400 earth damage and 100 physical damage per shot. Same range as matchlock colonist.",
+    "Pandaros.Settlers.FireTurret": "Fire Turret deals 400 fire damage and 100 physical damage per shot. Same range as matchlock colonist.",
+    "Pandaros.Settlers.WaterTurret": "Water Turret deals 400 water damage and 100 physical damage per shot. Same range as matchlock colonist.",
+    "Pandaros.Settlers.VoidTurret": "Void Turret  deals 400 void damage and 100 physical damage per shot. Same range as matchlock colonist.",
     "Pandaros.Settlers.HelpMenu": "To use: place it on your toolbar and right click. This will bring up the help menu for the Settlers! mod.",
     "Pandaros.Settlers.SchematicTool": "To use: place it on your toolbar and right click. This will bring up a menu that can create builder areas that can build and save schematics.",
-    "Pandaros.Settlers.ColonyManagementTool": "To use: place it on your toolbar and right click. The management tool is used to help recruit colonists and assign them directly to the jobs you want. It also shows job stats.",
     "Pandaros.Settlers.ServerManagementTool": "To use: place it on your toolbar and right click. The server management tool allows you to manage the players on your server!",
     "Pandaros.Settlers.Sorcerer": "Sorcerer crafts magical items for players and colonists.",
     "Pandaros.Settlers.Healthbooster": "Heals player for 5 health every 5 seconds. The effect stacks. Makes you feel slightly more invincible.",
@@ -426,29 +424,125 @@
     "Pandaros": {
       "Settlers": {
         "Apothecary": "Apothecary",
-        "inventory": {
-          "PlayerNumberPlaced": "Placed by you",
-          "PlayerNumberRemoved": "Removed by you",
-          "PlayerNumberInWorld": "In World by you",
-          "ColonyNumberPlaced": "Placed in Colony",
-          "ColonyNumberRemoved": "Removed in Colony",
-          "ColonyNumberInWorld": "In Colony",
-          "ColonyCreationDate": "Colony Creation Date"
+        "colonytool": {
+          "Amount": "Amount",
+          "Colonist": "Colonist",
+          "TimeToLeave": "Time To Leave",
+          "UnemployedLength": "Unemployment Length"
+        },
+        "GameDifficulty": {
+          "FoodMultiplier": "FoodMultiplier: ",
+          "MonsterDamage": "MonsterDamage: ",
+          "MonsterDamageReduction": "MonsterDamageReduction: ",
+          "CurrentDifficulty": "Settlers! Mod difficulty set to {0}.",
+          "DifficultyChangeDisabled": "The server administrator had disabled the changing of game difficulty.",
+          "DisabledBelow": "The server administrator had disabled setting your difficulty below {0}.",
+          "UnknownCommand": "Unknown command {0}",
+          "PossibleCommands": "Possible commands: "
         },
         "Permission": {
           "NotYourColony": "You may not build near this colony. Maybe you can ask one of the owners for an invite! The owners are: "
         },
+        "System": {
+          "ChatHistory": "Chat History",
+          "RestartNeeded": "For settlers mod auto update to work, the Colony Survival surver needs to be restarted."
+        },
+        "TeleportPad": {
+          "NeedsRepair": "This teleporter is in need of repair. Make sure a machinist is near by to maintain it!",
+          "NeedsMana": "This teleporter is in need of mana. Make sure a machinist is near by to maintain it!",
+          "PlaceAnotherTeleporter": "Place one more teleportation pad to link to.",
+          "TeleportersLinked": "Teleportation pads linked!"
+        },
+        "Monsters": {
+          "NoBanner": "WARNING: Unable to spawn boss. Please ensure you have a path to your banner. You have been penalized {0} food."
+        },
+        "Bosses": {
+          "AdminDisabledBosses": "The server administrator had disabled the changing of bosses.",
+          "BossesToggled": "Settlers! Mod Bosses are now ",
+          "on": "on",
+          "off": "off",
+          "NoColony": "You must be near a colony to set its difficulty"
+        },
+        "Version": {
+          "UpdateInstalled": "Settlers! update {0} installed. Restart server to update!",
+          "RestartRequired": "Settlers! Has been updated. Restart the server/game to apply.",
+          "VersionOutOfDate": "Settlers! version is out of date. The mod will automatically update now.",
+          "GitVersion": "Settlers! Git version: {0}.",
+          "ModVersion": "Settlers! Mod version: {0}."
+        },
         "SettlerManager": {
           "Accept": "Accept",
           "Decline": "Decline",
-          "NewSettlers": " settlers would like to join your colony!"
+          "NewSettlers": " settlers would like to join your colony!",
+          "BuyingColonists": "Recruiting after {0} colonists will result in {1} happiness debuff per colonists recruited. If you build it... they will come.",
+          "SettlersEnabled": "Random Settlers are currently {0}!",
+          "AdminDisabled": "The server administrator has disabled recruitment of colonists while settlers are enabled.",
+          "ColonistsLeft": " {0} colonists have left your colony.",
+          "FoodTaken": "A colonist has left your colony taking {0} food.",
+          "LeavingTakingItems": "A leaving colonist has taken {0} {1}",
+          "LeavingNumberOfItems": "A colonist has left your colony taking 10% of {0} items from your stockpile."
+        },
+        "Settlers": {
+          "AdminDisabledSettlers": "The server administrator had disabled the changing of Settlers.",
+          "Prompt": "Prompt",
+          "AlwaysAccept": "Always Accept",
+          "Disabled": "Disabled",
+          "SettlersState": "Settlers! Mod Settlers are set to ",
+          "SettlersToggleTime": "Settlers! Settlers are set to {0}. You have toggled this {1} out of {2} times.",
+          "AbuseWarning": "To limit abuse of the /settlers command you can no longer toggle settlers on or off. You have used your alloted {0} times.",
+          "SettlerChance": "Additional chance to get settlers: {0}%",
+          "SkillChance": "Additional Skill chance: {0}%",
+          "SkilledSettlerChance": "Additional Skilled Settler Chance {0}%"
+        },
+        "Knights": {
+          "NoFlags": "You have no patrol flags in your stockpile or inventory.",
+          "CreateJob": "Patrol Point number {0} Registered! Right click to create Job.",
+          "RoundRobin": "Round Robin",
+          "Zipper": "Zipper",
+          "WaitRoundRobin": "Waiting Round Robin",
+          "WaitZipper": "Waiting Zipper",
+          "PatrolsNotActive": "Patrol with {0} patrol points no longer active.",
+          "RoundRobinDescription": "The knight will patrol from the first to last point, start over at the first point. Good for circles.",
+          "ZipperDescription": "The knight will patrol from the first to last point, then, work its way backwords to the first. Good for patrolling a secion of a wall",
+          "WaitRoundRobinDescription": "The knight will patrol from the first to last point, then, work its way backwords to the first.  The knight will wait for monsters to come to them. Good for patrolling a secion of a wall",
+          "WaitZipperDescription": "The knight will patrol from the first to last point, start over at the first point. Good for circles. The knight will wait for monsters to come to them.",
+          "PatrolTypeSet": "Patrol type set to {0}!",
+          "MustPlaceFlag": "You must place patrol flags using left click before setting the patrol.",
+          "Active": "Patrol Active! To stop the patrol pick up any of the patrol flags in the patrol."
+        },
+        "BuildersWand": {
+          "Horizontal": "Horizontal",
+          "Vertical": "Vertical",
+          "TopAndBottomX": "Top and Bottom X",
+          "TopAndBottomZ": "Top and Bottom Z",
+          "WandMode": "Wand mode set to {0}. Charge Left: {1}",
+          "OutOfEnergy": "Your Builders wand has Run out of energy and turns to dust in your hands.",
+          "NotValidTopOrBottom": "Building on top or bottom of a block not valid for wand mode: {0}."
+        },
+        "Configuration": {
+          "UnknownConfiguration": "The configuration {0} does not exist."
+        },
+        "Weapon": {
+          "Broke": "Your {0} has broke!"
         },
         "Happiness": {
           "BedsClose": "Beds too Close",
-          "ColonistDied": "Colonist Died",
+          "ColonistDied": "Colonist Died ({0}h Remain)",
           "SlowGuards": "Guard shooting rate reduced by",
           "NotEnoughBeds": "Not Enough Beds",
-          "NotEnoughJobs":  "Not Enough Jobs"
+          "NotEnoughJobs": "Not Enough Jobs",
+          "ColonistsBought": "Slaves Bought ({0}h Remain)",
+          "Decor": "Great Decor!"
+        },
+        "Beds": {
+          "BedLocations": "Bed Information",
+          "Position": "Position",
+          "Occupied": "Occupied",
+          "Placement": "Placement",
+          "Bad": "Bad",
+          "Good": "Good",
+          "Yes": "Yes",
+          "No": "No"
         }
       }
     }

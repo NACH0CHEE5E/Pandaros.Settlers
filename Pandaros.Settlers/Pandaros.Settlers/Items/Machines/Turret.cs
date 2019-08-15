@@ -1,8 +1,9 @@
 ﻿using Monsters;
+using Pandaros.API;
+using Pandaros.API.Jobs.Roaming;
+using Pandaros.API.Models;
+using Pandaros.API.Server;
 using Pandaros.Settlers.Jobs;
-using Pandaros.Settlers.Jobs.Roaming;
-using Pandaros.Settlers.Models;
-using Pandaros.Settlers.Server;
 using Pipliz;
 using Pipliz.JSON;
 using Recipes;
@@ -35,6 +36,8 @@ namespace Pandaros.Settlers.Items.Machines
 
         public string ObjectiveCategory => MachineConstants.MECHANICAL;
 
+        public float WatchArea => 21;
+
         public void DoWork(Colony c, RoamingJobState state)
         {
             Turret.DoWork(c, state);
@@ -44,7 +47,7 @@ namespace Pandaros.Settlers.Items.Machines
     public class RepairTurret : IRoamingJobObjectiveAction
     {
         public string name => MachineConstants.REPAIR;
-
+        public float ActionEnergyMinForFix => .5f;
         public float TimeToPreformAction => 10;
 
         public string AudioKey => GameLoader.NAMESPACE + ".HammerAudio";
@@ -60,7 +63,7 @@ namespace Pandaros.Settlers.Items.Machines
     public class ReloadTurret : IRoamingJobObjectiveAction
     {
         public string name => MachineConstants.RELOAD;
-
+        public float ActionEnergyMinForFix => .5f;
         public float TimeToPreformAction => 5;
 
         public string AudioKey => GameLoader.NAMESPACE + ".ReloadingAudio";
@@ -76,11 +79,6 @@ namespace Pandaros.Settlers.Items.Machines
     [ModLoader.ModManager]
     public static class Turret
     {
-        public const string STONE = "Stone Turret";
-        public const string BRONZEARROW = "Bronze Arrow Turret";
-        public const string CROSSBOW = "Crossbow Turret";
-        public const string MATCHLOCK = "Matchlock Turret";
-
         public static Dictionary<string, TurretSetting> TurretSettings = new Dictionary<string, TurretSetting>();
 
         public static Dictionary<string, ItemTypesServer.ItemTypeRaw> TurretTypes = new Dictionary<string, ItemTypesServer.ItemTypeRaw>();
@@ -94,46 +92,45 @@ namespace Pandaros.Settlers.Items.Machines
         {
             var retval = ItemId.GetItemId(GameLoader.NAMESPACE + ".Repairing");
 
-            if (!colony.OwnerIsOnline() && SettlersConfiguration.OfflineColonies || colony.OwnerIsOnline())
-                try
+            try
+            {
+                if (machineState.GetActionEnergy(MachineConstants.REPAIR) < .75f && TurretSettings.ContainsKey(machineState.RoamObjective))
                 {
-                    if (machineState.GetActionEnergy(MachineConstants.REPAIR) < .75f && TurretSettings.ContainsKey(machineState.RoamObjective))
-                    {
-                        var repaired       = false;
-                        var requiredForFix = new List<InventoryItem>();
-                        var stockpile      = colony.Stockpile;
+                    var repaired       = false;
+                    var requiredForFix = new List<InventoryItem>();
+                    var stockpile      = colony.Stockpile;
 
-                        foreach (var durability in TurretSettings[machineState.RoamObjective]
-                                                  .RequiredForFix.OrderByDescending(s => s.Key))
-                            if (machineState.GetActionEnergy(MachineConstants.REPAIR) < durability.Key)
+                    foreach (var durability in TurretSettings[machineState.RoamObjective]
+                                                .RequiredForFix.OrderByDescending(s => s.Key))
+                        if (machineState.GetActionEnergy(MachineConstants.REPAIR) < durability.Key)
+                        {
+                            requiredForFix = durability.Value;
+                            break;
+                        }
+
+                    if (stockpile.Contains(requiredForFix))
+                    {
+                        stockpile.TryRemove(requiredForFix);
+                        repaired = true;
+                    }
+                    else
+                    {
+                        foreach (var item in requiredForFix)
+                            if (!stockpile.Contains(item) && item.Type != 0)
                             {
-                                requiredForFix = durability.Value;
+                                retval = ItemId.GetItemId(item.Type);
                                 break;
                             }
-
-                        if (stockpile.Contains(requiredForFix))
-                        {
-                            stockpile.TryRemove(requiredForFix);
-                            repaired = true;
-                        }
-                        else
-                        {
-                            foreach (var item in requiredForFix)
-                                if (!stockpile.Contains(item) && item.Type != 0)
-                                {
-                                    retval = ItemId.GetItemId(item.Type);
-                                    break;
-                                }
-                        }
-
-                        if (repaired)
-                            machineState.ResetActionToMaxLoad(MachineConstants.REPAIR);
                     }
+
+                    if (repaired)
+                        machineState.ResetActionToMaxLoad(MachineConstants.REPAIR);
                 }
-                catch (Exception ex)
-                {
-                    PandaLogger.LogError(ex);
-                }
+            }
+            catch (Exception ex)
+            {
+                SettlersLogger.LogError(ex);
+            }
 
             return retval;
         }
@@ -142,115 +139,113 @@ namespace Pandaros.Settlers.Items.Machines
         {
             var retval = ItemId.GetItemId(GameLoader.NAMESPACE + ".Reload");
 
-            if (!colony.OwnerIsOnline() && SettlersConfiguration.OfflineColonies || colony.OwnerIsOnline())
-                try
+            try
+            {
+                if (TurretSettings.ContainsKey(machineState.RoamObjective) && machineState.GetActionEnergy(MachineConstants.RELOAD) < .75f)
                 {
-                    if (TurretSettings.ContainsKey(machineState.RoamObjective) && machineState.GetActionEnergy(MachineConstants.RELOAD) < .75f)
-                    {
-                        var stockpile = colony.Stockpile;
+                    var stockpile = colony.Stockpile;
 
-                        while (stockpile.Contains(TurretSettings[machineState.RoamObjective].Ammo) &&
-                               machineState.GetActionEnergy(MachineConstants.RELOAD) <= RoamingJobState.GetActionsMaxEnergy(MachineConstants.RELOAD, colony, MachineConstants.MECHANICAL))
-                            if (stockpile.TryRemove(TurretSettings[machineState.RoamObjective].Ammo))
-                            {
-                                machineState.AddToActionEmergy(MachineConstants.RELOAD, TurretSettings[machineState.RoamObjective].AmmoReloadValue);
+                    while (stockpile.Contains(TurretSettings[machineState.RoamObjective].Ammo) &&
+                            machineState.GetActionEnergy(MachineConstants.RELOAD) <= RoamingJobState.GetActionsMaxEnergy(MachineConstants.RELOAD, colony, MachineConstants.MECHANICAL))
+                        if (stockpile.TryRemove(TurretSettings[machineState.RoamObjective].Ammo))
+                        {
+                            machineState.AddToActionEmergy(MachineConstants.RELOAD, TurretSettings[machineState.RoamObjective].AmmoReloadValue);
 
-                                if (TurretSettings[machineState.RoamObjective].Ammo.Any(itm => itm.Type == ColonyBuiltIn.ItemTypes.GUNPOWDERPOUCH))
-                                    stockpile.Add(ColonyBuiltIn.ItemTypes.LINENPOUCH);
-                            }
+                            if (TurretSettings[machineState.RoamObjective].Ammo.Any(itm => itm.Type == ColonyBuiltIn.ItemTypes.GUNPOWDERPOUCH))
+                                stockpile.Add(ColonyBuiltIn.ItemTypes.LINENPOUCH);
+                        }
 
-                        if (machineState.GetActionEnergy(MachineConstants.RELOAD) < RoamingJobState.GetActionsMaxEnergy(MachineConstants.RELOAD, colony, MachineConstants.MECHANICAL))
-                            retval = ItemId.GetItemId(TurretSettings[machineState.RoamObjective].Ammo.FirstOrDefault(ammo => !stockpile.Contains(ammo)).Type);
-                    }
+                    if (machineState.GetActionEnergy(MachineConstants.RELOAD) < RoamingJobState.GetActionsMaxEnergy(MachineConstants.RELOAD, colony, MachineConstants.MECHANICAL))
+                        retval = ItemId.GetItemId(TurretSettings[machineState.RoamObjective].Ammo.FirstOrDefault(ammo => !stockpile.Contains(ammo)).Type);
                 }
-                catch (Exception ex)
-                {
-                    PandaLogger.LogError(ex);
-                }
+            }
+            catch (Exception ex)
+            {
+                SettlersLogger.LogError(ex);
+            }
 
             return retval;
         }
 
         public static void DoWork(Colony colony, RoamingJobState machineState)
         {
-            if (!colony.OwnerIsOnline() && SettlersConfiguration.OfflineColonies || colony.OwnerIsOnline())
-                try
+            try
+            {
+                if (TurretSettings.ContainsKey(machineState.RoamObjective) &&
+                    machineState.GetActionEnergy(MachineConstants.REPAIR) > 0 &&
+                    machineState.GetActionEnergy(MachineConstants.REFUEL) > 0 &&
+                    machineState.NextTimeForWork < Time.SecondsSinceStartDouble)
                 {
-                    if (TurretSettings.ContainsKey(machineState.RoamObjective) &&
-                        machineState.GetActionEnergy(MachineConstants.REPAIR) > 0 &&
-                        machineState.GetActionEnergy(MachineConstants.REFUEL) > 0 &&
-                        machineState.NextTimeForWork < Time.SecondsSinceStartDouble)
+                    var stockpile = colony.Stockpile;
+
+                    machineState.SubtractFromActionEnergy(MachineConstants.REPAIR, TurretSettings[machineState.RoamObjective].DurabilityPerDoWork);
+                    machineState.SubtractFromActionEnergy(MachineConstants.REFUEL, TurretSettings[machineState.RoamObjective].FuelPerDoWork);
+
+                    if (machineState.GetActionEnergy(MachineConstants.RELOAD) > 0)
                     {
-                        var stockpile = colony.Stockpile;
+                        var totalDamage = TurretSettings[machineState.RoamObjective].TotalDamage;
 
-                        machineState.SubtractFromActionEnergy(MachineConstants.REPAIR, TurretSettings[machineState.RoamObjective].DurabilityPerDoWork);
-                        machineState.SubtractFromActionEnergy(MachineConstants.REFUEL, TurretSettings[machineState.RoamObjective].FuelPerDoWork);
+                        var monster = MonsterTracker.Find(machineState.Position.Add(0, 1, 0),
+                                                            TurretSettings[machineState.RoamObjective].Range,
+                                                            totalDamage);
 
-                        if (machineState.GetActionEnergy(MachineConstants.RELOAD) > 0)
+                        if (monster == null)
+                            monster = MonsterTracker.Find(machineState.Position.Add(1, 0, 0),
+                                                            TurretSettings[machineState.RoamObjective].Range,
+                                                            totalDamage);
+
+                        if (monster == null)
+                            monster = MonsterTracker.Find(machineState.Position.Add(-1, 0, 0),
+                                                            TurretSettings[machineState.RoamObjective].Range,
+                                                            totalDamage);
+
+                        if (monster == null)
+                            monster = MonsterTracker.Find(machineState.Position.Add(0, -1, 0),
+                                                            TurretSettings[machineState.RoamObjective].Range,
+                                                            totalDamage);
+
+                        if (monster == null)
+                            monster = MonsterTracker.Find(machineState.Position.Add(0, 0, 1),
+                                                            TurretSettings[machineState.RoamObjective].Range,
+                                                            totalDamage);
+
+                        if (monster == null)
+                            monster = MonsterTracker.Find(machineState.Position.Add(0, 0, -1),
+                                                            TurretSettings[machineState.RoamObjective].Range,
+                                                            totalDamage);
+
+                        if (monster != null)
                         {
-                            var totalDamage = TurretSettings[machineState.RoamObjective].TotalDamage;
+                            machineState.SubtractFromActionEnergy(MachineConstants.RELOAD, TurretSettings[machineState.RoamObjective].AmmoValue);
 
-                            var monster = MonsterTracker.Find(machineState.Position.Add(0, 1, 0),
-                                                              TurretSettings[machineState.RoamObjective].Range,
-                                                              totalDamage);
+                            if (World.TryGetTypeAt(machineState.Position.Add(0, 1, 0), out ushort above) && above == ColonyBuiltIn.ItemTypes.AIR.Id)
+                                Indicator.SendIconIndicatorNear(machineState.Position.Add(0, 1, 0).Vector,
+                                                                new IndicatorState(TurretSettings[machineState.RoamObjective].WorkTime,
+                                                                                    TurretSettings[machineState.RoamObjective].Ammo.FirstOrDefault().Type));
 
-                            if (monster == null)
-                                monster = MonsterTracker.Find(machineState.Position.Add(1, 0, 0),
-                                                              TurretSettings[machineState.RoamObjective].Range,
-                                                              totalDamage);
+                            if (TurretSettings[machineState.RoamObjective].OnShootAudio != null)
+                                AudioManager.SendAudio(machineState.Position.Vector, TurretSettings[machineState.RoamObjective].OnShootAudio);
 
-                            if (monster == null)
-                                monster = MonsterTracker.Find(machineState.Position.Add(-1, 0, 0),
-                                                              TurretSettings[machineState.RoamObjective].Range,
-                                                              totalDamage);
+                            if (TurretSettings[machineState.RoamObjective].OnHitAudio != null)
+                                AudioManager.SendAudio(monster.PositionToAimFor,TurretSettings[machineState.RoamObjective].OnHitAudio);
 
-                            if (monster == null)
-                                monster = MonsterTracker.Find(machineState.Position.Add(0, -1, 0),
-                                                              TurretSettings[machineState.RoamObjective].Range,
-                                                              totalDamage);
+                            TurretSettings[machineState.RoamObjective]
+                                .ProjectileAnimation
+                                .SendMoveToInterpolated(machineState.Position.Vector, monster.PositionToAimFor);
 
-                            if (monster == null)
-                                monster = MonsterTracker.Find(machineState.Position.Add(0, 0, 1),
-                                                              TurretSettings[machineState.RoamObjective].Range,
-                                                              totalDamage);
-
-                            if (monster == null)
-                                monster = MonsterTracker.Find(machineState.Position.Add(0, 0, -1),
-                                                              TurretSettings[machineState.RoamObjective].Range,
-                                                              totalDamage);
-
-                            if (monster != null)
-                            {
-                                machineState.SubtractFromActionEnergy(MachineConstants.RELOAD, TurretSettings[machineState.RoamObjective].AmmoValue);
-
-                                if (World.TryGetTypeAt(machineState.Position.Add(0, 1, 0), out ushort above) && above == ColonyBuiltIn.ItemTypes.AIR.Id)
-                                    Indicator.SendIconIndicatorNear(machineState.Position.Add(0, 1, 0).Vector,
-                                                                    new IndicatorState(TurretSettings[machineState.RoamObjective].WorkTime,
-                                                                                       TurretSettings[machineState.RoamObjective].Ammo.FirstOrDefault().Type));
-
-                                if (TurretSettings[machineState.RoamObjective].OnShootAudio != null)
-                                    AudioManager.SendAudio(machineState.Position.Vector, TurretSettings[machineState.RoamObjective].OnShootAudio);
-
-                                if (TurretSettings[machineState.RoamObjective].OnHitAudio != null)
-                                    AudioManager.SendAudio(monster.PositionToAimFor,TurretSettings[machineState.RoamObjective].OnHitAudio);
-
-                                TurretSettings[machineState.RoamObjective]
-                                   .ProjectileAnimation
-                                   .SendMoveToInterpolated(machineState.Position.Vector, monster.PositionToAimFor);
-
-                                ServerManager.SendParticleTrail(machineState.Position.Vector, monster.PositionToAimFor, 2);
-                                monster.OnHit(totalDamage, machineState, ModLoader.OnHitData.EHitSourceType.Misc);
-                            }
+                            ServerManager.SendParticleTrail(machineState.Position.Vector, monster.PositionToAimFor, 2);
+                            monster.OnHit(totalDamage, machineState, ModLoader.OnHitData.EHitSourceType.Misc);
                         }
-
-                        machineState.NextTimeForWork =
-                            machineState.RoamingJobSettings.WorkTime + Time.SecondsSinceStartDouble;
                     }
+
+                    machineState.NextTimeForWork =
+                        machineState.RoamingJobSettings.WorkTime + Time.SecondsSinceStartDouble;
                 }
-                catch (Exception ex)
-                {
-                    PandaLogger.LogError(ex, $"Turret shoot for {machineState.RoamObjective}");
-                }
+            }
+            catch (Exception ex)
+            {
+                SettlersLogger.LogError(ex, $"Turret shoot for {machineState.RoamObjective}");
+            }
         }
 
         [ModLoader.ModCallback(ModLoader.EModCallbackType.AfterItemTypesDefined,
@@ -299,7 +294,7 @@ namespace Pandaros.Settlers.Items.Machines
                                              sling,
                                              stoneAmmo
                                          },
-                                         new RecipeResult(TurretSettings[STONE].TurretItem.ItemIndex),
+                                         new RecipeResult(TurretSettings[STONE_NAMESPACE].TurretItem.ItemIndex),
                                          5);
 
             ServerManager.RecipeStorage.AddLimitTypeRecipe(AdvancedCrafterRegister.JOB_NAME, stonerecipe);
@@ -317,7 +312,7 @@ namespace Pandaros.Settlers.Items.Machines
                                                    arrow,
                                                    bow
                                                },
-                                               new RecipeResult(TurretSettings[BRONZEARROW].TurretItem.ItemIndex),
+                                               new RecipeResult(TurretSettings[BRONZEARROW_NAMESPACE].TurretItem.ItemIndex),
                                                5);
 
             ServerManager.RecipeStorage.AddLimitTypeRecipe(AdvancedCrafterRegister.JOB_NAME, bronzeArrowrecipe);
@@ -335,7 +330,7 @@ namespace Pandaros.Settlers.Items.Machines
                                                 bolt,
                                                 crossbow
                                             },
-                                            new RecipeResult(TurretSettings[CROSSBOW].TurretItem.ItemIndex),
+                                            new RecipeResult(TurretSettings[CROSSBOW_NAMESPACE].TurretItem.ItemIndex),
                                             5);
 
             ServerManager.RecipeStorage.AddLimitTypeRecipe(AdvancedCrafterRegister.JOB_NAME, crossbowrecipe);
@@ -354,7 +349,7 @@ namespace Pandaros.Settlers.Items.Machines
                                                  gunpowder,
                                                  matchlock
                                              },
-                                             new RecipeResult(TurretSettings[MATCHLOCK].TurretItem.ItemIndex),
+                                             new RecipeResult(TurretSettings[MATCHLOCK_NAMESPACE].TurretItem.ItemIndex),
                                              5);
 
             ServerManager.RecipeStorage.AddLimitTypeRecipe(AdvancedCrafterRegister.JOB_NAME, matchlockrecipe);
@@ -369,12 +364,12 @@ namespace Pandaros.Settlers.Items.Machines
         {
             var turretSettings = new TurretSetting
             {
-                TurretItem          = TurretTypes[STONE],
+                TurretItem          = TurretTypes[STONE_NAMESPACE],
                 Ammo                = new List<InventoryItem> {new InventoryItem(ColonyBuiltIn.ItemTypes.SLINGBULLET.Name)},
                 AmmoValue           = 0.04f,
                 DurabilityPerDoWork = 0.005f,
                 FuelPerDoWork       = 0.003f,
-                Name                = STONE,
+                Name                = STONE_NAMESPACE,
                 OnShootAudio        = "sling",
                 OnHitAudio          = "fleshHit",
                 Range               = 10,
@@ -430,19 +425,19 @@ namespace Pandaros.Settlers.Items.Machines
 
             turretSettings.Damage[DamageType.Physical] = 50;
 
-            TurretSettings[STONE] = turretSettings;
+            TurretSettings[STONE_NAMESPACE] = turretSettings;
         }
 
         private static void AddBronzeArrowTurretSettings()
         {
             var turretSettings = new TurretSetting
             {
-                TurretItem          = TurretTypes[BRONZEARROW],
+                TurretItem          = TurretTypes[BRONZEARROW_NAMESPACE],
                 Ammo                = new List<InventoryItem> {new InventoryItem(ColonyBuiltIn.ItemTypes.BRONZEARROW.Name)},
                 AmmoValue           = 0.04f,
                 DurabilityPerDoWork = 0.003f,
                 FuelPerDoWork       = 0.01f,
-                Name                = BRONZEARROW,
+                Name                = BRONZEARROW_NAMESPACE,
                 OnShootAudio        = "bowShoot",
                 OnHitAudio          = "fleshHit",
                 Range               = 15,
@@ -498,19 +493,19 @@ namespace Pandaros.Settlers.Items.Machines
 
             turretSettings.Damage[DamageType.Physical] = 100;
 
-            TurretSettings[BRONZEARROW] = turretSettings;
+            TurretSettings[BRONZEARROW_NAMESPACE] = turretSettings;
         }
 
         private static void AddCrossBowTurretSettings()
         {
             var turretSettings = new TurretSetting
             {
-                TurretItem          = TurretTypes[CROSSBOW],
+                TurretItem          = TurretTypes[CROSSBOW_NAMESPACE],
                 Ammo                = new List<InventoryItem> {new InventoryItem(ColonyBuiltIn.ItemTypes.CROSSBOWBOLT.Name)},
                 AmmoValue           = 0.04f,
                 DurabilityPerDoWork = 0.005f,
                 FuelPerDoWork       = 0.02f,
-                Name                = CROSSBOW,
+                Name                = CROSSBOW_NAMESPACE,
                 OnShootAudio        = "bowShoot",
                 OnHitAudio          = "fleshHit",
                 Range               = 20,
@@ -566,14 +561,14 @@ namespace Pandaros.Settlers.Items.Machines
 
             turretSettings.Damage[DamageType.Physical] = 300;
 
-            TurretSettings[CROSSBOW] = turretSettings;
+            TurretSettings[CROSSBOW_NAMESPACE] = turretSettings;
         }
 
         private static void AddMatchlockTurretSettings()
         {
             var turretSettings = new TurretSetting
             {
-                TurretItem = TurretTypes[MATCHLOCK],
+                TurretItem = TurretTypes[MATCHLOCK_NAMESPACE],
                 Ammo = new List<InventoryItem>
                 {
                     new InventoryItem(ColonyBuiltIn.ItemTypes.LEADBULLET.Name),
@@ -582,7 +577,7 @@ namespace Pandaros.Settlers.Items.Machines
                 AmmoValue           = 0.04f,
                 DurabilityPerDoWork = 0.008f,
                 FuelPerDoWork       = 0.02f,
-                Name                = MATCHLOCK,
+                Name                = MATCHLOCK_NAMESPACE,
                 OnShootAudio        = "matchlock",
                 OnHitAudio          = "fleshHit",
                 Range               = 25,
@@ -638,7 +633,7 @@ namespace Pandaros.Settlers.Items.Machines
 
             turretSettings.Damage[DamageType.Physical] = 500;
 
-            TurretSettings[MATCHLOCK] = turretSettings;
+            TurretSettings[MATCHLOCK_NAMESPACE] = turretSettings;
         }
 
         [ModLoader.ModCallback(ModLoader.EModCallbackType.AfterSelectedWorld,
@@ -711,7 +706,7 @@ namespace Pandaros.Settlers.Items.Machines
             turretNode.SetAs("categories", categories);
 
             var item = new ItemTypesServer.ItemTypeRaw(turretName, turretNode);
-            TurretTypes[STONE] = item;
+            TurretTypes[STONE_NAMESPACE] = item;
             items.Add(turretName, item);
         }
 
@@ -740,7 +735,7 @@ namespace Pandaros.Settlers.Items.Machines
             turretNode.SetAs("categories", categories);
 
             var item = new ItemTypesServer.ItemTypeRaw(turretName, turretNode);
-            TurretTypes[BRONZEARROW] = item;
+            TurretTypes[BRONZEARROW_NAMESPACE] = item;
             items.Add(turretName, item);
         }
 
@@ -769,7 +764,7 @@ namespace Pandaros.Settlers.Items.Machines
             turretNode.SetAs("categories", categories);
 
             var item = new ItemTypesServer.ItemTypeRaw(turretName, turretNode);
-            TurretTypes[CROSSBOW] = item;
+            TurretTypes[CROSSBOW_NAMESPACE] = item;
             items.Add(turretName, item);
         }
 
@@ -798,7 +793,7 @@ namespace Pandaros.Settlers.Items.Machines
             turretNode.SetAs("categories", categories);
 
             var item = new ItemTypesServer.ItemTypeRaw(turretName, turretNode);
-            TurretTypes[MATCHLOCK] = item;
+            TurretTypes[MATCHLOCK_NAMESPACE] = item;
             items.Add(turretName, item);
         }
 

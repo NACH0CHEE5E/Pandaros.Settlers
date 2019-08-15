@@ -1,6 +1,8 @@
-﻿using Pandaros.Settlers.Items.Machines;
+﻿using Pandaros.API;
+using Pandaros.API.Jobs.Roaming;
+using Pandaros.API.Research;
+using Pandaros.Settlers.Items.Machines;
 using Pandaros.Settlers.Jobs;
-using Pandaros.Settlers.Jobs.Roaming;
 using Science;
 using System.Collections.Generic;
 
@@ -51,7 +53,7 @@ namespace Pandaros.Settlers.Research
                     0,
                     new List<string>()
                     {
-                        ColonyBuiltIn.Research.BLOOMERY
+                        ColonyBuiltIn.Research.IRONSMELTING
                     }
                 }
             };
@@ -73,6 +75,46 @@ namespace Pandaros.Settlers.Research
                     }
                 }
             };
+        }
+
+        public class AddInventoryUpgrade : PandaResearch
+        {
+            public override string name => GameLoader.NAMESPACE + ".InventoryUpgrade";
+
+            public override string IconDirectory => GameLoader.ICON_PATH;
+
+            public override float BaseValue => 0.5f;
+
+            public override Dictionary<int, List<InventoryItem>> RequiredItems => new Dictionary<int, List<InventoryItem>>()
+            {
+                {
+                    0,
+                    new List<InventoryItem>()
+                    {
+                        new InventoryItem(ColonyBuiltIn.ItemTypes.IRONBLOCK.Id),
+                        new InventoryItem(ColonyBuiltIn.ItemTypes.PLANKS.Id, 5),
+                        new InventoryItem(ColonyBuiltIn.ItemTypes.STEELINGOT.Id, 2),
+                        new InventoryItem(ColonyBuiltIn.ItemTypes.BRONZECOIN.Id, 5),
+                        new InventoryItem(ColonyBuiltIn.ItemTypes.GOLDCOIN.Id, 5)
+                    }
+                }
+            };
+
+            public override Dictionary<int, List<string>> Dependancies => new Dictionary<int, List<string>>()
+            {
+                {
+                    0,
+                    new List<string>()
+                    {
+                        SettlersBuiltIn.Research.MACHINES1
+                    }
+                }
+            };
+
+            public override void ResearchComplete(object sender, ResearchCompleteEventArgs e)
+            {
+                RoamingJobState.SetActionsMaxEnergy(MachineConstants.INVENTORY, e.Manager.Colony, MachineConstants.MECHANICAL, RoamingJobState.DEFAULT_MAX + (RoamingJobState.DEFAULT_MAX * e.Research.Value));
+            }
         }
 
         public class AddImprovedDuarability : PandaResearch

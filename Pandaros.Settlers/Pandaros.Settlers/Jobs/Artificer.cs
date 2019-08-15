@@ -1,17 +1,14 @@
 ﻿using Jobs;
 using NPC;
-using Pandaros.Settlers.Items;
-using Pandaros.Settlers.Jobs.Roaming;
-using Pandaros.Settlers.Models;
-using Pandaros.Settlers.Research;
+using Pandaros.API;
+using Pandaros.API.Items;
+using Pandaros.API.Jobs.Roaming;
+using Pandaros.API.Models;
+using Pandaros.API.Research;
 using Pipliz;
 using Recipes;
 using Science;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Pandaros.Settlers.Jobs
@@ -57,7 +54,8 @@ namespace Pandaros.Settlers.Jobs
                     0,
                     new List<string>()
                     {
-                        SettlersBuiltIn.Research.SORCERER1
+                        SettlersBuiltIn.Research.SORCERER1,
+                        SettlersBuiltIn.Research.MACHINES1
                     }
                 }
             };
@@ -72,7 +70,11 @@ namespace Pandaros.Settlers.Jobs
                     new RecipeUnlock(SettlersBuiltIn.ItemTypes.MANAPIPE, ERecipeUnlockType.Recipe),
                     new RecipeUnlock(SettlersBuiltIn.ItemTypes.MANAPUMP, ERecipeUnlockType.Recipe),
                     new RecipeUnlock(SettlersBuiltIn.ItemTypes.MANATANK, ERecipeUnlockType.Recipe),
-                    new RecipeUnlock(SettlersBuiltIn.ItemTypes.MAGICWAND, ERecipeUnlockType.Recipe)
+                    new RecipeUnlock(SettlersBuiltIn.ItemTypes.MAGICWAND, ERecipeUnlockType.Recipe),
+                    new RecipeUnlock(SettlersBuiltIn.ItemTypes.TRAINSTATION, ERecipeUnlockType.Recipe),
+                    new RecipeUnlock(SettlersBuiltIn.ItemTypes.MONORAIL, ERecipeUnlockType.Recipe),
+                    new RecipeUnlock(SettlersBuiltIn.ItemTypes.PROPULSIONPLATFORM, ERecipeUnlockType.Recipe),
+                    new RecipeUnlock(SettlersBuiltIn.ItemTypes.GOLDCUBE, ERecipeUnlockType.Recipe)
                 }
             }
         };
@@ -154,19 +156,18 @@ namespace Pandaros.Settlers.Jobs
         }
 
 
-        public override List<string> ObjectiveCategories => new List<string>() { "Mana" };
+        public override List<string> ObjectiveCategories => new List<string>() { "ManaMachine" };
         public override string JobItemKey => JOB_ITEM_KEY;
         public override List<ItemId> OkStatus => new List<ItemId>
             {
                 ItemId.GetItemId(GameLoader.NAMESPACE + ".Refuel"),
                 ItemId.GetItemId(GameLoader.NAMESPACE + ".Repairing"),
-                ItemId.GetItemId(GameLoader.NAMESPACE + ".Waiting")
+                ItemId.GetItemId("Pandaros.API.Waiting")
             };
     }
 
-
-    public class ArtificerSettings : CraftingJobSettings, IBlockJobSettings
-    {
+    public class ArtificerSettings : IBlockJobSettings
+    { 
         static NPCType _Settings;
 
         static ArtificerSettings()
@@ -183,16 +184,22 @@ namespace Pandaros.Settlers.Jobs
             _Settings = NPCType.GetByKeyNameOrDefault(Artificer.JOB_NAME);
         }
 
-        public override ItemTypes.ItemType[] BlockTypes => new[]
+        public ItemTypes.ItemType[] BlockTypes => new[]
         {
             ItemTypes.GetType(Artificer.JOB_ITEM_KEY)
         };
 
-        public override NPCType NPCType => _Settings;
+        public NPCType NPCType => _Settings;
 
-        public override InventoryItem RecruitmentItem => new InventoryItem(GameLoader.NAMESPACE + ".MagicWand");
+        public InventoryItem RecruitmentItem => new InventoryItem(GameLoader.NAMESPACE + ".MagicWand");
 
-        public override Pipliz.Vector3Int GetJobLocation(BlockJobInstance instance)
+        public bool ToSleep => !TimeCycle.IsDay;
+
+        public virtual float NPCShopGameHourMinimum => TimeCycle.Settings.SleepTimeEnd;
+
+        public virtual float NPCShopGameHourMaximum => TimeCycle.Settings.SleepTimeStart;
+
+        public Pipliz.Vector3Int GetJobLocation(BlockJobInstance instance)
         {
             if (instance is RoamingJob roamingJob)
             {
@@ -202,16 +209,21 @@ namespace Pandaros.Settlers.Jobs
             return Pipliz.Vector3Int.invalidPos;
         }
 
-        public override void OnNPCAtJob(BlockJobInstance instance, ref NPCBase.NPCState state)
+        public void OnNPCAtJob(BlockJobInstance instance, ref NPCBase.NPCState state)
         {
-            if (instance is RoamingJob roamingJob && roamingJob.TargetObjective == null)
-            {
-                base.OnNPCAtJob(instance, ref state);
-                return;
-            }
+            if (instance is RoamingJob roamingJob)
+                 roamingJob.OnNPCAtJob(ref state);
+        }
 
-            instance.OnNPCAtJob(ref state);
+        public void OnGoalChanged(BlockJobInstance instanceBlock, NPCBase.NPCGoal oldGoal, NPCBase.NPCGoal newGoal)
+        {
+            
+        }
+
+        public void OnNPCAtStockpile(BlockJobInstance instance, ref NPCBase.NPCState state)
+        {
+            
         }
     }
-    
+
 }

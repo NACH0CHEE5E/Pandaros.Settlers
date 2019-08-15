@@ -1,13 +1,10 @@
-﻿using BlockTypes;
-using Jobs;
+﻿using Jobs;
 using NPC;
-using Pandaros.Settlers.Items;
-using Pandaros.Settlers.Models;
-using Pandaros.Settlers.Research;
-using Pipliz.JSON;
+using Pandaros.API;
+using Pandaros.API.Models;
+using Pandaros.API.Research;
 using Recipes;
 using Science;
-using Shared;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -21,7 +18,7 @@ namespace Pandaros.Settlers.Jobs
                 0,
                 new List<InventoryItem>()
                 {
-                    new InventoryItem(Items.Reagents.Adamantine.NAME),
+                    new InventoryItem(SettlersBuiltIn.ItemTypes.ADAMANTINENUGGET.Id, 4),
                     new InventoryItem(ColonyBuiltIn.ItemTypes.SCIENCEBAGCOLONY.Id),
                     new InventoryItem(ColonyBuiltIn.ItemTypes.SCIENCEBAGBASIC.Id, 3),
                     new InventoryItem(ColonyBuiltIn.ItemTypes.SCIENCEBAGADVANCED.Id)
@@ -34,7 +31,7 @@ namespace Pandaros.Settlers.Jobs
                 0,
                 new List<IResearchableCondition>()
                 {
-                    new HappinessCondition() { Threshold = 150 },
+                    new HappinessCondition() { Threshold = 90 },
                     new ColonistCountCondition() { Threshold = 250 }
                 }
             }
@@ -47,9 +44,9 @@ namespace Pandaros.Settlers.Jobs
                 0,
                 new List<string>()
                 {
-                    GameLoader.NAMESPACE + ".ArmorSmithing" + 4,
-                    GameLoader.NAMESPACE + ".SwordSmithing" + 4,
-                    GameLoader.NAMESPACE + ".Elementium" + 1,
+                    SettlersBuiltIn.Research.ARMORSMITHING4,
+                    SettlersBuiltIn.Research.SWORDSMITHING4,
+                    SettlersBuiltIn.Research.ELEMENTIUM1,
                     ColonyBuiltIn.Research.SCIENCEBAGADVANCED,
                     ColonyBuiltIn.Research.SCIENCEBAGCOLONY
                 }
@@ -67,7 +64,8 @@ namespace Pandaros.Settlers.Jobs
                 1,
                 new List<RecipeUnlock>()
                 {
-                    new RecipeUnlock(SettlersBuiltIn.ItemTypes.SORCERERTABLE, ERecipeUnlockType.Recipe)
+                    new RecipeUnlock(SettlersBuiltIn.ItemTypes.SORCERERTABLE, ERecipeUnlockType.Recipe),
+                    new RecipeUnlock(SettlersBuiltIn.ItemTypes.ADAMANTINE, ERecipeUnlockType.Recipe)
                 }
             }
         };

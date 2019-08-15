@@ -1,4 +1,4 @@
-using Pandaros.Settlers.Models;
+using Pandaros.API.Models;
 
 namespace Pandaros.Settlers
 {
@@ -37,11 +37,31 @@ namespace Pandaros.Settlers
           public const string IMPROVEDFUELCAPACITY3 = "Pandaros.Settlers.ImprovedFuelCapacity3";
           public const string IMPROVEDFUELCAPACITY4 = "Pandaros.Settlers.ImprovedFuelCapacity4";
           public const string IMPROVEDFUELCAPACITY5 = "Pandaros.Settlers.ImprovedFuelCapacity5";
+          public const string IMPROVEDMANACAPACITY1 = "Pandaros.Settlers.ImprovedManaCapacity1";
+          public const string IMPROVEDMANACAPACITY2 = "Pandaros.Settlers.ImprovedManaCapacity2";
+          public const string IMPROVEDMANACAPACITY3 = "Pandaros.Settlers.ImprovedManaCapacity3";
+          public const string IMPROVEDMANACAPACITY4 = "Pandaros.Settlers.ImprovedManaCapacity4";
+          public const string IMPROVEDMANACAPACITY5 = "Pandaros.Settlers.ImprovedManaCapacity5";
+          public const string IMPROVEDMONORAILTRAINDISTANCE1 = "Pandaros.Settlers.ImprovedMonorailTrainDistance1";
+          public const string IMPROVEDMONORAILTRAINDISTANCE2 = "Pandaros.Settlers.ImprovedMonorailTrainDistance2";
+          public const string IMPROVEDMONORAILTRAINDISTANCE3 = "Pandaros.Settlers.ImprovedMonorailTrainDistance3";
+          public const string IMPROVEDMONORAILTRAINDISTANCE4 = "Pandaros.Settlers.ImprovedMonorailTrainDistance4";
+          public const string IMPROVEDMONORAILTRAINDISTANCE5 = "Pandaros.Settlers.ImprovedMonorailTrainDistance5";
+          public const string IMPROVEDMONORAILTRAINSPEED1 = "Pandaros.Settlers.ImprovedMonorailTrainSpeed1";
+          public const string IMPROVEDMONORAILTRAINSPEED2 = "Pandaros.Settlers.ImprovedMonorailTrainSpeed2";
+          public const string IMPROVEDMONORAILTRAINSPEED3 = "Pandaros.Settlers.ImprovedMonorailTrainSpeed3";
+          public const string IMPROVEDMONORAILTRAINSPEED4 = "Pandaros.Settlers.ImprovedMonorailTrainSpeed4";
+          public const string IMPROVEDMONORAILTRAINSPEED5 = "Pandaros.Settlers.ImprovedMonorailTrainSpeed5";
           public const string INCREASEDCAPACITY1 = "Pandaros.Settlers.IncreasedCapacity1";
           public const string INCREASEDCAPACITY2 = "Pandaros.Settlers.IncreasedCapacity2";
           public const string INCREASEDCAPACITY3 = "Pandaros.Settlers.IncreasedCapacity3";
           public const string INCREASEDCAPACITY4 = "Pandaros.Settlers.IncreasedCapacity4";
           public const string INCREASEDCAPACITY5 = "Pandaros.Settlers.IncreasedCapacity5";
+          public const string INVENTORYUPGRADE1 = "Pandaros.Settlers.InventoryUpgrade1";
+          public const string INVENTORYUPGRADE2 = "Pandaros.Settlers.InventoryUpgrade2";
+          public const string INVENTORYUPGRADE3 = "Pandaros.Settlers.InventoryUpgrade3";
+          public const string INVENTORYUPGRADE4 = "Pandaros.Settlers.InventoryUpgrade4";
+          public const string INVENTORYUPGRADE5 = "Pandaros.Settlers.InventoryUpgrade5";
           public const string KNIGHTS1 = "Pandaros.Settlers.Knights1";
           public const string MACHINES1 = "Pandaros.Settlers.Machines1";
           public const string MANA1 = "Pandaros.Settlers.Mana1";
@@ -209,19 +229,14 @@ namespace Pandaros.Settlers
           public static readonly ItemId AIRSTONE = ItemId.GetItemId("Pandaros.Settlers.AirStone");
           public static readonly ItemId AIRTURRET = ItemId.GetItemId("Pandaros.Settlers.AirTurret");
           public static readonly ItemId ANITBIOTIC = ItemId.GetItemId("Pandaros.Settlers.Anitbiotic");
-          public static readonly ItemId ANTIDOTE = ItemId.GetItemId("Pandaros.Settlers.Antidote");
           public static readonly ItemId APOTHECARY = ItemId.GetItemId("Pandaros.Settlers.Apothecary");
           public static readonly ItemId APOTHECARYTABLE = ItemId.GetItemId("Pandaros.Settlers.ApothecaryTable");
           public static readonly ItemId ARTIFICERBENCH = ItemId.GetItemId("Pandaros.Settlers.ArtificerBench");
           public static readonly ItemId ADAMANTINE = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.Adamantine");
           public static readonly ItemId ADAMANTINENUGGET = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.AdamantineNugget");
-          public static readonly ItemId FLOWERS1 = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.Flowers1");
           public static readonly ItemId SELECTOR = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.Selector");
-          public static readonly ItemId SUNFLOWER = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.Sunflower");
           public static readonly ItemId ADOBESLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.adobeslab");
-          public static readonly ItemId ALOE = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.aloe");
           public static readonly ItemId ALTAR = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.altar");
-          public static readonly ItemId BEEF = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.beef");
           public static readonly ItemId BENCH = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.bench");
           public static readonly ItemId BERRYBUSHSLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.berrybushslab");
           public static readonly ItemId BLACKCLAY = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.blackclay");
@@ -236,14 +251,11 @@ namespace Pandaros.Settlers
           public static readonly ItemId BROWNCLAY = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.brownclay");
           public static readonly ItemId BROWNCLAYSLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.brownclayslab");
           public static readonly ItemId BROWNDYE = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.browndye");
-          public static readonly ItemId CAKE = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.cake");
           public static readonly ItemId CARPENTER = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.carpenter");
           public static readonly ItemId CARPETBLUESLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.carpetblueslab");
           public static readonly ItemId CARPETREDSLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.carpetredslab");
           public static readonly ItemId CARPETYELLOWSLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.carpetyellowslab");
-          public static readonly ItemId CARROT = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.carrot");
           public static readonly ItemId CHALK = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.chalk");
-          public static readonly ItemId CHEESE = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.cheese");
           public static readonly ItemId CHERRYBLOSSOMSLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.cherryblossomslab");
           public static readonly ItemId CHISEL = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.chisel");
           public static readonly ItemId CLAYSLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.clayslab");
@@ -254,7 +266,6 @@ namespace Pandaros.Settlers
           public static readonly ItemId CYANCLAY = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.cyanclay");
           public static readonly ItemId CYANCLAYSLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.cyanclayslab");
           public static readonly ItemId CYANDYE = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.cyandye");
-          public static readonly ItemId DAISY = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.daisy");
           public static readonly ItemId DARKBLUECLAY = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.darkblueclay");
           public static readonly ItemId DARKBLUECLAYSLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.darkblueclayslab");
           public static readonly ItemId DARKBLUEDYE = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.darkbluedye");
@@ -262,7 +273,6 @@ namespace Pandaros.Settlers
           public static readonly ItemId DIRTBRICKSLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.dirtbrickslab");
           public static readonly ItemId DIRTSLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.dirtslab");
           public static readonly ItemId DOUBLEWINDOW = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.doublewindow");
-          public static readonly ItemId EGG = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.egg");
           public static readonly ItemId FENCE = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.fence");
           public static readonly ItemId FENCECORNER = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.fencecorner");
           public static readonly ItemId GLASS = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.glass");
@@ -316,7 +326,6 @@ namespace Pandaros.Settlers
           public static readonly ItemId MARBLEPILLARBODY = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.marblepillarbody");
           public static readonly ItemId MARBLEPILLARTOP = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.marblepillartop");
           public static readonly ItemId MARBLESLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.marbleslab");
-          public static readonly ItemId MILK = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.milk");
           public static readonly ItemId MOSSSTONE = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.mossstone");
           public static readonly ItemId MOSSSTONEBRICKS = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.mossstonebricks");
           public static readonly ItemId MOSSSTONEBRICKSSLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.mossstonebricksslab");
@@ -347,7 +356,6 @@ namespace Pandaros.Settlers
           public static readonly ItemId REFINEDEMERALD = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.refinedemerald");
           public static readonly ItemId REFINEDRUBY = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.refinedruby");
           public static readonly ItemId REFINEDSAPPHIRE = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.refinedsapphire");
-          public static readonly ItemId ROSE = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.rose");
           public static readonly ItemId SANDSLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.sandslab");
           public static readonly ItemId SANDSTONE = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.sandstone");
           public static readonly ItemId SANDSTONESLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.sandstoneslab");
@@ -364,7 +372,6 @@ namespace Pandaros.Settlers
           public static readonly ItemId STONESQUARES = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.stonesquares");
           public static readonly ItemId STONESQUARESSLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.stonesquaresslab");
           public static readonly ItemId STRAWSLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.strawslab");
-          public static readonly ItemId TULIP = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.tulip");
           public static readonly ItemId WATERSLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.waterslab");
           public static readonly ItemId WHITECLAY = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.whiteclay");
           public static readonly ItemId WHITECLAYSLAB = ItemId.GetItemId("Pandaros.Settlers.AutoLoad.whiteclayslab");
@@ -392,7 +399,6 @@ namespace Pandaros.Settlers
           public static readonly ItemId BRONZESHIELD = ItemId.GetItemId("Pandaros.Settlers.BronzeShield");
           public static readonly ItemId BRONZESWORD = ItemId.GetItemId("Pandaros.Settlers.BronzeSword");
           public static readonly ItemId BUILDERSWAND = ItemId.GetItemId("Pandaros.Settlers.BuildersWand");
-          public static readonly ItemId COLONYMANAGEMENTTOOL = ItemId.GetItemId("Pandaros.Settlers.ColonyManagementTool");
           public static readonly ItemId COPPERBOOTS = ItemId.GetItemId("Pandaros.Settlers.CopperBoots");
           public static readonly ItemId COPPERCHEST = ItemId.GetItemId("Pandaros.Settlers.CopperChest");
           public static readonly ItemId COPPERGLOVES = ItemId.GetItemId("Pandaros.Settlers.CopperGloves");
@@ -409,6 +415,7 @@ namespace Pandaros.Settlers
           public static readonly ItemId FIRETURRET = ItemId.GetItemId("Pandaros.Settlers.FireTurret");
           public static readonly ItemId GATE = ItemId.GetItemId("Pandaros.Settlers.Gate");
           public static readonly ItemId GATELEVER = ItemId.GetItemId("Pandaros.Settlers.GateLever");
+          public static readonly ItemId GOLDCUBE = ItemId.GetItemId("Pandaros.Settlers.GoldCube");
           public static readonly ItemId HEALTHBOOSTER = ItemId.GetItemId("Pandaros.Settlers.Healthbooster");
           public static readonly ItemId HELPMENU = ItemId.GetItemId("Pandaros.Settlers.HelpMenu");
           public static readonly ItemId HERBALISTBENCH = ItemId.GetItemId("Pandaros.Settlers.HerbalistBench");
@@ -425,13 +432,16 @@ namespace Pandaros.Settlers
           public static readonly ItemId MACHINISTBENCH = ItemId.GetItemId("Pandaros.Settlers.MachinistBench");
           public static readonly ItemId MAGICWAND = ItemId.GetItemId("Pandaros.Settlers.MagicWand");
           public static readonly ItemId MANA = ItemId.GetItemId("Pandaros.Settlers.Mana");
+          public static readonly ItemId MANAPIPE = ItemId.GetItemId("Pandaros.Settlers.ManaPipe");
+          public static readonly ItemId MANAPUMP = ItemId.GetItemId("Pandaros.Settlers.ManaPump");
+          public static readonly ItemId MANATANK = ItemId.GetItemId("Pandaros.Settlers.ManaTank");
           public static readonly ItemId MATCHLOCKTURRET = ItemId.GetItemId("Pandaros.Settlers.MatchlockTurret");
           public static readonly ItemId MINER = ItemId.GetItemId("Pandaros.Settlers.Miner");
+          public static readonly ItemId MONORAIL = ItemId.GetItemId("Pandaros.Settlers.Monorail");
           public static readonly ItemId NIGHTMACHINISTBENCH = ItemId.GetItemId("Pandaros.Settlers.NightMachinistBench");
           public static readonly ItemId PATROLFLAG = ItemId.GetItemId("Pandaros.Settlers.PatrolFlag");
           public static readonly ItemId PATROLTOOL = ItemId.GetItemId("Pandaros.Settlers.PatrolTool");
-          public static readonly ItemId MANAPIPE = ItemId.GetItemId("Pandaros.Settlers.ManaPipe");
-          public static readonly ItemId MANAPUMP = ItemId.GetItemId("Pandaros.Settlers.ManaPump");
+          public static readonly ItemId PROPULSIONPLATFORM = ItemId.GetItemId("Pandaros.Settlers.PropulsionPlatform");
           public static readonly ItemId SCHEMATICTOOL = ItemId.GetItemId("Pandaros.Settlers.SchematicTool");
           public static readonly ItemId SERVERMANAGEMENTTOOL = ItemId.GetItemId("Pandaros.Settlers.ServerManagementTool");
           public static readonly ItemId SKILLEDBOOTS = ItemId.GetItemId("Pandaros.Settlers.SkilledBoots");
@@ -465,8 +475,8 @@ namespace Pandaros.Settlers
           public static readonly ItemId STEELSHIELD = ItemId.GetItemId("Pandaros.Settlers.SteelShield");
           public static readonly ItemId STEELSWORD = ItemId.GetItemId("Pandaros.Settlers.SteelSword");
           public static readonly ItemId STONETURRET = ItemId.GetItemId("Pandaros.Settlers.StoneTurret");
-          public static readonly ItemId MANATANK = ItemId.GetItemId("Pandaros.Settlers.ManaTank");
           public static readonly ItemId TELEPORTPAD = ItemId.GetItemId("Pandaros.Settlers.TeleportPad");
+          public static readonly ItemId TRAINSTATION = ItemId.GetItemId("Pandaros.Settlers.TrainStation");
           public static readonly ItemId TREATEDBANDAGE = ItemId.GetItemId("Pandaros.Settlers.TreatedBandage");
           public static readonly ItemId VOID = ItemId.GetItemId("Pandaros.Settlers.Void");
           public static readonly ItemId VOIDTURRET = ItemId.GetItemId("Pandaros.Settlers.VoidTurret");

@@ -3,47 +3,59 @@
     "dllpath": "Pandaros.Settlers.dll",
     "name": "Pandaros.Settlers",
     "namepretty": "Pandaros' Settlers!",
-    "version": "0.8.2.0",
+    "version": "0.8.2.68",
     "enabled": true,
     "marksgamemodded": true,
     "compatibleversions": [
       "0.7.0"
     ],
-    "Pandaros.Settlers.jsonFiles": [
+    "Pandaros.API.jsonFiles": [
       {
-        "fileType": "Pandaros.Settlers.CSItems",
+        "fileType": "Pandaros.API.CSItems",
         "relativePath": "SettlersItems.json"
       },
       {
-        "fileType": "Pandaros.Settlers.MenuFile",
+        "fileType": "Pandaros.API.MenuFile",
         "relativePath": "Help/Menus/help.json"
       },
       {
-        "fileType": "Pandaros.Settlers.MenuFile",
+        "fileType": "Pandaros.API.MenuFile",
         "relativePath": "Help/Menus/Apothecary.json"
       },
       {
-        "fileType": "Pandaros.Settlers.MenuFile",
+        "fileType": "Pandaros.API.MenuFile",
         "relativePath": "Help/Menus/Knights.json"
       },
       {
-        "fileType": "Pandaros.Settlers.MenuFile",
+        "fileType": "Pandaros.API.MenuFile",
         "relativePath": "Help/Menus/Machinists.json"
       },
       {
-        "fileType": "Pandaros.Settlers.MenuFile",
+        "fileType": "Pandaros.API.MenuFile",
         "relativePath": "Help/Menus/Machines.json"
       },
       {
-        "fileType": "Pandaros.Settlers.MenuFile",
+        "fileType": "Pandaros.API.MenuFile",
         "relativePath": "Help/Menus/ChatCommands.json"
       },
       {
-        "fileType": "Pandaros.Settlers.MenuFile",
+        "fileType": "Pandaros.API.MenuFile",
         "relativePath": "Help/Menus/DamageMatrix.json"
       },
       {
-        "fileType": "Pandaros.Settlers.OreLayers",
+        "fileType": "Pandaros.API.MenuFile",
+        "relativePath": "Help/Menus/Conductor.json"
+      },
+      {
+        "fileType": "Pandaros.API.MenuFile",
+        "relativePath": "Help/Menus/armor.json"
+      },
+      {
+        "fileType": "Pandaros.API.MenuFile",
+        "relativePath": "Help/Menus/patchNotes.json"
+      },
+      {
+        "fileType": "Pandaros.API.OreLayers",
         "relativePath": "WorldGen/OreSettings.json"
       }
     ],
@@ -110,6 +122,16 @@
       },
       {
         "fileType": "addOrOverrideLocalization",
+        "relativePath": "localization/en-US/help/Armor/en-US.json",
+        "index": -99999
+      },
+      {
+        "fileType": "addOrOverrideLocalization",
+        "relativePath": "localization/en-US/help/PatchNotes/en-US.json",
+        "index": -99999
+      },
+      {
+        "fileType": "addOrOverrideLocalization",
         "relativePath": "localization/en-US/science/en-US.json",
         "index": -99999
       },
@@ -120,12 +142,12 @@
       },
       {
         "fileType": "addOrOverrideLocalization",
-        "relativePath": "localization/en-US/colonytool/en-US.json",
+        "relativePath": "localization/en-US/backpack/en-US.json",
         "index": -99999
       },
       {
         "fileType": "addOrOverrideLocalization",
-        "relativePath": "localization/en-US/backpack/en-US.json",
+        "relativePath": "localization/en-US/help/Conductor/en-US.json",
         "index": -99999
       },
       {
@@ -150,15 +172,6 @@
         "index": -99999,
         "limitsUIMapping": [
           "Pandaros.Settlers.ApothecaryTable"
-        ]
-      },
-      {
-        "fileType": "addOrReplaceNPCRecipes",
-        "relativePath": "AutoLoad/Artificer.json",
-        "npcType": "Pandaros.Settlers.Artificer",
-        "index": -99999,
-        "limitsUIMapping": [
-          "Pandaros.Settlers.ArtificerBench"
         ]
       },
       {
@@ -279,6 +292,8 @@
           "Fixed stone slab name",
           "Fixed bug where colonists would be hurt after researching colonist health",
           "Mining machines no longer mine faster. They are still more efficient than manual as you can have 4-5 mining machines per Machinist",
+          "Added Chat History. Button in colony UI tab.",
+          "Added Tutorials",
           "Added the ability to build minecraft schematics with the schematic tool",
           "Added schematic tool research, requires builders.",
           "Added the ability so save schematics. they save on a per colony and player basis.",
@@ -292,32 +307,38 @@
           "Added train system",
           "Added new monster types. These have elemental resitances",
           "Added Happiness cause that will lower happiness when beds are too close",
-          "Added Happiness cause that will lower happiness for a duration based on difficulty when a colonist dies/leaves the colony",
+          "Added Happiness cause that will lower happiness for a duration based on difficulty (24h on medium) when a colonist dies/leaves the colony",
           "Added Happiness cause that will lower happiness when there are not enough beds for colonists",
-          "Added Happiness cause that will lower happiness when there are not enough jobs for colonists",
+          "Added Happiness cause that will lower happiness when there are not enough jobs for colonists (past 10)",
           "Added Happiness cause that will make guards attack slower if happiness is too low",
+          "Added Happiness cause that will make colonists more skilled based on happiness (skilled causes colonists to crit if guards, an additional item to be gather in gathering professions or bonus items to be crafted for crafters)",
+          "Added Happiness cause that will modifiy the chance to get settlers based on happiness.",
+          "Added Happiness cause that will modifiy the chance to get skilled settlers based on happiness. Skilled settlers have an additional 2-5% base skill chance.",
           "Added Stats for each colonists in the Colony management tool",
           "Added serveral new ore layers including new magical ores from layers 40-42",
           "Added antigrief for players who are not in your colony.",
-          "Added prompt to accept or reject new settlers. Settlers no longer auto join your colony.",
+          "Added prompt to accept or reject new settlers.",
           "Added setting for prompt of settlers, Auto Accept, Prompt, Disabled",
           "Added Connected block system expandable by JSON for modders. This is similar to the way minecraft auto connects stairs, pipes and track.",
           "Added Artificer. Creates Mana Tanks, Pipes, Pumps along with some magical machines! Artificer Also Maintains these machines similar to Machinists",
           "Added Train System. You can add stops to the trains. These trains run on mana from the Artificer job. The trains automatically go round and each stop must be worked by a colonist.",
-          "Added Mana Machine that Increases Guard damage (10%)",
+          "Added Mana Machine that Increases Guard damage (10%), 6 blocks in each direction",
           "Added Mana Machine that Monster AoE Damage 10 per 5/sec, 4 block each direction (advanced)",
           "Added Mana Machine that Invisible wall (5x2) rotatable (normal blocks, just invisible)",
           "Added Mana Machine that +2% Luck 4 blocks each direction (Luck in settlers is used for crit chance and bonus item procs (bonus items are rare items sometimes crafted with settlers items)",
           "Added Mana Machine that Happiness Generator (Colonists are hypnotized by its beauty) +10 happiness while running. (Advanced)",
-          "Added Elemental zombies that spawn, these will spawn as your colony grows in addition to the normal zombies.",
+          "Added special zombies that spawn, these will spawn as your colony grows in addition to the normal zombies.",
           "Added Loot tables",
+          "Added Inventories to mining machines, they have to be unloaded by macninists. There is research to upgrade the capacity. Initially its 10. Through research it can increase to 35.",
           "Bosses now start randomly spawning after 100 colonists. Up from 15.",
           "Machinists now have a day and night job.",
           "Knights now have a wait mode that will wait for monsters to come to them while patrolling",
           "Knights now sleep durning the day",
           "Bosses now only spawn during the Night",
           "Slabs, Fence, Iron bar and doors now have proper colliders",
-          "Call to arms will use equipt swords now",
+          "Call to arms has been removed",
+          "Offline colonies has been removed",
+          "Settler research is now available at the start of a colony",
           "Colonists will now puch zombies when they come close to them. Its configured as ColonistPunchDamage and defaults to 30 damage",
           "Swords will auto equit to colonists now but always leave at least 4 in the stockpile. This is similar to armor",
           "Added serveral new ores that generate in the map: Adamantine, Emerald, Ruby, Saphire",

@@ -1,8 +1,11 @@
 ﻿using AI;
 using Monsters;
 using NPC;
-using Pandaros.Settlers.Entities;
-using Pandaros.Settlers.Models;
+using Pandaros.API;
+using Pandaros.API.Entities;
+using Pandaros.API.Models;
+using Pandaros.API.Monsters;
+using Pandaros.API.Server;
 using Pipliz;
 using Pipliz.JSON;
 using Shared;
@@ -33,7 +36,7 @@ namespace Pandaros.Settlers.Monsters.Bosses
             CurrentHealth = _totalHealth;
         }
 
-        public IPandaBoss GetNewBoss(Path path, Colony p)
+        public IPandaZombie GetNewInstance(Path path, Colony p)
         {
             return new FallenRanger(path, p);
         }
@@ -42,7 +45,7 @@ namespace Pandaros.Settlers.Monsters.Bosses
         public string DeathText => "Looks like I have to work on my aim.";
         public string name => "Fallen Ranger";
         public override float TotalHealth => _totalHealth;
-
+        public int MinColonists => 150;
         public bool KilledBefore
         {
             get => false;
@@ -53,8 +56,7 @@ namespace Pandaros.Settlers.Monsters.Bosses
         public float ZombieMultiplier => 1f;
         public float ZombieHPBonus => 0;
         public float MissChance => 0.05f;
-
-        public string LootTableName => BossLoot.LootTableName;
+        public string MosterType => "Boss";
 
         public Dictionary<DamageType, float> Damage { get; } = new Dictionary<DamageType, float>
         {
@@ -85,26 +87,29 @@ namespace Pandaros.Settlers.Monsters.Bosses
                     VoxelPhysics.CanSee(Position, p.Position))
                 {
                     Indicator.SendIconIndicatorNear(new Vector3Int(Position), ID,
-                                                    new IndicatorState(2, ItemId.GetItemId(GameLoader.NAMESPACE + ".BowIcon").Id));
+                                                    new IndicatorState(10, ItemId.GetItemId(GameLoader.NAMESPACE + ".BowIcon").Id));
 
+                    AnimationManager.AnimatedObjects[AnimationManager.ARROW].SendMoveToInterpolated(Position, p.Position);
+                    ServerManager.SendParticleTrail(Position, p.Position, 2);
                     AudioManager.SendAudio(Position, "bowShoot");
                     p.Health -= Damage.Sum(kvp => kvp.Key.CalcDamage(DamageType.Physical, kvp.Value));
                     AudioManager.SendAudio(p.Position, "fleshHit");
-                    _cooldown = Time.SecondsSinceStartDouble + 4;
+                    _cooldown = Time.SecondsSinceStartDouble + 10;
                 }
                 else if (NPCTracker.TryGetNear(Position, 30, out var npc) &&
                          VoxelPhysics.CanSee(Position, npc.Position.Vector))
                 {
                     Indicator.SendIconIndicatorNear(new Vector3Int(Position), ID,
-                                                    new IndicatorState(2, ItemId.GetItemId(GameLoader.NAMESPACE + ".BowIcon").Id));
+                                                    new IndicatorState(10, ItemId.GetItemId(GameLoader.NAMESPACE + ".BowIcon").Id));
 
                     AudioManager.SendAudio(Position, "bowShoot");
-
+                    AnimationManager.AnimatedObjects[AnimationManager.ARROW].SendMoveToInterpolated(Position, npc.Position.Vector);
+                    ServerManager.SendParticleTrail(Position, npc.Position.Vector, 2);
                     npc.OnHit(Damage.Sum(kvp => kvp.Key.CalcDamage(DamageType.Physical, kvp.Value)), this,
                               ModLoader.OnHitData.EHitSourceType.Monster);
 
                     AudioManager.SendAudio(npc.Position.Vector, "fleshHit");
-                    _cooldown = Time.SecondsSinceStartDouble + 4;
+                    _cooldown = Time.SecondsSinceStartDouble + 10;
                 }
             }
 

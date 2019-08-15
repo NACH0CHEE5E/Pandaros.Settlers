@@ -1,9 +1,7 @@
 ﻿using Happiness;
+using Pandaros.API;
+using Pandaros.API.localization;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Pandaros.Settlers.ColonyManagement
 {
@@ -11,11 +9,11 @@ namespace Pandaros.Settlers.ColonyManagement
     {
         public string GetDescription(Colony colony, Players.Player player)
         {
-            var localizationHelper = new localization.LocalizationHelper("Happiness");
+            var localizationHelper = new LocalizationHelper(GameLoader.NAMESPACE, "Happiness");
             var name = "";
-            var cs = Entities.ColonyState.GetColonyState(colony);
+            var cs = API.Entities.ColonyState.GetColonyState(colony);
 
-            if (colony.HappinessData.CachedHappiness < 20)
+            if (colony.DifficultySetting.EnabledHappiness && colony.HappinessData.CachedHappiness < 20)
             {
                 float percent = 0.05f;
 
@@ -31,14 +29,14 @@ namespace Pandaros.Settlers.ColonyManagement
                 if (colony.HappinessData.CachedHappiness < 0)
                     percent = 0.25f;
 
-                percent = percent * cs.Difficulty.UnhappyGuardsMultiplyRate;
+                percent = percent * cs.Difficulty.GetorDefault("UnhappyGuardsMultiplyRate", 0);
 
                 foreach (var colonist in colony.Followers)
                 {
                     colonist.ApplyJobResearch();
 
-                    if (colonist.Job != null && colonist.Job.IsValid && colonist.TryGetNPCGuardSettings(out var guardJobSettings))
-                        guardJobSettings.CooldownShot = guardJobSettings.CooldownShot - (guardJobSettings.CooldownShot * percent);
+                    if (colonist.Job != null && colonist.Job.IsValid && colonist.TryGetNPCGuardSettings(out var guardJobSettings) && colonist.TryGetNPCGuardDefaultSettings(out var defaultSettings))
+                        guardJobSettings.CooldownShot = defaultSettings.CooldownShot + (defaultSettings.CooldownShot * percent);
                 }
                 
                 name = localizationHelper.LocalizeOrDefault("SlowGuards", player) + " " + Math.Round((percent * 100), 2) + "%";

@@ -1,18 +1,16 @@
-﻿using BlockTypes;
-using NetworkUI;
+﻿using NetworkUI;
 using NetworkUI.Items;
-using Pandaros.Settlers.Entities;
-using Pandaros.Settlers.Models;
-using Pandaros.Settlers.Research;
-using Pipliz;
+using Pandaros.API;
+using Pandaros.API.Entities;
+using Pandaros.API.Items;
+using Pandaros.API.localization;
+using Pandaros.API.Models;
+using Pandaros.API.Research;
+using Recipes;
 using Science;
 using Shared;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static Pandaros.Settlers.Items.StaticItems;
 
 namespace Pandaros.Settlers.Items
 {
@@ -42,7 +40,16 @@ namespace Pandaros.Settlers.Items
             }
         };
 
-        public Dictionary<int, List<RecipeUnlock>> Unlocks => null;
+        public Dictionary<int, List<RecipeUnlock>> Unlocks =>  new Dictionary<int, List<RecipeUnlock>>()
+        {
+            {
+                1,
+                new List<RecipeUnlock>()
+                {
+                    new RecipeUnlock(SettlersBuiltIn.ItemTypes.BACKPACK, ERecipeUnlockType.Recipe)
+                }
+            }
+        };
 
         public void OnRegister()
         {
@@ -54,6 +61,29 @@ namespace Pandaros.Settlers.Items
             foreach (var p in e.Manager.Colony.Owners)
                 StaticItems.AddStaticItemToStockpile(p);
         }
+    }
+
+    public class BackpackRecipe : ICSRecipe
+    {
+        public List<RecipeItem> requires => new List<RecipeItem>()
+        {
+            new RecipeItem(ColonyBuiltIn.ItemTypes.LINEN.Id, 6)
+        };
+
+        public List<RecipeResult> results => new List<RecipeResult>()
+        {
+            new RecipeResult(SettlersBuiltIn.ItemTypes.BACKPACK.Id)
+        };
+
+        public CraftPriority defaultPriority => CraftPriority.Low;
+
+        public bool isOptional => true;
+
+        public int defaultLimit => 1;
+
+        public string Job => ColonyBuiltIn.NpcTypes.CRAFTER;
+
+        public string name => SettlersBuiltIn.ItemTypes.BACKPACK;
     }
 
     public class Backpack : CSType
@@ -68,18 +98,12 @@ namespace Pandaros.Settlers.Items
             "essential",
             "aaa"
         };
-
-        public override StaticItem StaticItemSettings => new StaticItem()
-        {
-            Name = NAME,
-            RequiredScience = NAME + 1
-        };
     }
 
     [ModLoader.ModManager]
     public class BackpackCallbacks
     {
-        static readonly Pandaros.Settlers.localization.LocalizationHelper _localizationHelper = new localization.LocalizationHelper("backpack");
+        static readonly LocalizationHelper _localizationHelper = new LocalizationHelper(GameLoader.NAMESPACE, "backpack");
 
         [ModLoader.ModCallback(ModLoader.EModCallbackType.OnPlayerClicked, GameLoader.NAMESPACE + ".Items.Backpack.OpenMenu")]
         public static void OpenMenu(Players.Player player, PlayerClickedData playerClickData)
@@ -129,11 +153,19 @@ namespace Pandaros.Settlers.Items
             }
             else if (data.ButtonIdentifier == "Backpack.SelectNoneInBackpackMain")
             {
-                NetworkMenuManager.SendServerPopup(data.Player, MainMenu(data.Player, false, true));
+                NetworkMenuManager.SendServerPopup(data.Player, MainMenu(data.Player, false, false));
             }
             else if (data.ButtonIdentifier == "Backpack.SelectAllInBackpackMain")
             {
-                NetworkMenuManager.SendServerPopup(data.Player, MainMenu(data.Player, false, false));
+                NetworkMenuManager.SendServerPopup(data.Player, MainMenu(data.Player, false, true));
+            }
+            else if (data.ButtonIdentifier == "Backpack.SelectNoneInBackpackToolbar")
+            {
+                NetworkMenuManager.SendServerPopup(data.Player, ToolbarMenu(data, false, false));
+            }
+            else if (data.ButtonIdentifier == "Backpack.SelectAllInBackpackToolbar")
+            {
+                NetworkMenuManager.SendServerPopup(data.Player, ToolbarMenu(data, false, true));
             }
             else if (data.ButtonIdentifier == "Backpack.MoveItemsToStockpile")
             {
@@ -330,7 +362,7 @@ namespace Pandaros.Settlers.Items
             }
             catch (Exception ex)
             {
-                PandaLogger.LogError(ex);
+                SettlersLogger.LogError(ex);
             }
 
             return menu;
@@ -397,7 +429,7 @@ namespace Pandaros.Settlers.Items
             }
             catch (Exception ex)
             {
-                PandaLogger.LogError(ex);
+                SettlersLogger.LogError(ex);
             }
 
             return menu;

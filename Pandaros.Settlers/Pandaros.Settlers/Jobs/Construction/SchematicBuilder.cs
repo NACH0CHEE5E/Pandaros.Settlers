@@ -1,11 +1,9 @@
-﻿using BlockTypes;
-using Jobs;
+﻿using Jobs;
 using NPC;
-using Pandaros.Settlers.NBT;
+using Pandaros.API;
+using Pandaros.API.Models;
 using Pipliz;
 using Pipliz.Mods.BaseGame.Construction;
-using Recipes;
-using Shared;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -21,7 +19,9 @@ namespace Pandaros.Settlers.Jobs.Construction
         {
             foreach (var iterator in _needsChunkLoaded)
             {
-                if (iterator.CurrentPosition.IsWithinBounds(data.CheckedChunk.Position, data.CheckedChunk.Bounds))
+                if (iterator != null && 
+                    iterator.CurrentPosition != null && 
+                    iterator.CurrentPosition.IsWithinBounds(data.CheckedChunk.Position, data.CheckedChunk.Bounds))
                     data.Result = true;
             }
         }
@@ -35,7 +35,7 @@ namespace Pandaros.Settlers.Jobs.Construction
 
             if (bpi == null)
             {
-                PandaLogger.Log(ChatColor.yellow, "iterationType must be of type SchematicIterator for the SchematicBuilder.");
+                SettlersLogger.Log(ChatColor.yellow, "iterationType must be of type SchematicIterator for the SchematicBuilder.");
                 state.SetIndicator(new Shared.IndicatorState(5f, ColonyBuiltIn.ItemTypes.ERRORIDLE.Name));
                 AreaJobTracker.RemoveJob(areaJob);
                 return;
@@ -63,8 +63,9 @@ namespace Pandaros.Settlers.Jobs.Construction
                 if (World.TryGetTypeAt(iterationType.CurrentPosition, out ushort foundTypeIndex))
                 {
                     i++;
+                    var founditemId = ItemId.GetItemId(foundTypeIndex);
 
-                    if (foundTypeIndex == buildType.ItemIndex) // check if the blocks are the same, if they are, move past. Most of the time this will be air.
+                    if (foundTypeIndex == buildType.ItemIndex || buildType.Name.Contains("bedend") || (founditemId.Name.Contains("bedend") && buildType.ItemIndex == ColonyBuiltIn.ItemTypes.AIR)) // check if the blocks are the same, if they are, move past. Most of the time this will be air.
                         if (iterationType.MoveNext())
                             continue;
                         else
@@ -79,20 +80,22 @@ namespace Pandaros.Settlers.Jobs.Construction
 
                     Stockpile ownerStockPile = areaJob.Owner.Stockpile;
 
-                    bool ok = buildType.ItemIndex == ColonyBuiltIn.ItemTypes.AIR.Id;
+                    bool stockpileContainsBuildItem = buildType.ItemIndex == ColonyBuiltIn.ItemTypes.AIR.Id;
 
-                    if (!ok && ownerStockPile.Contains(buildType.ItemIndex))
-                        ok = true;
+                    if (!stockpileContainsBuildItem && ownerStockPile.Contains(buildType.ItemIndex))
+                        stockpileContainsBuildItem = true;
 
-                    if (!ok && !string.IsNullOrWhiteSpace(buildType.ParentType))
+                    if (!stockpileContainsBuildItem && buildType.Name.Contains("bed") && ownerStockPile.Contains(ItemId.GetItemId("bed")))
+                        stockpileContainsBuildItem = true;
+
+                    if (!stockpileContainsBuildItem && 
+                        !string.IsNullOrWhiteSpace(buildType.ParentType) &&
+                        ownerStockPile.Contains(buildType.ParentItemType.ItemIndex))
                     {
-                       var parentType = ItemTypes.GetType(buildType.ParentType);
-
-                        if (!ok && ownerStockPile.Contains(parentType.ItemIndex))
-                            ok = true;
+                        stockpileContainsBuildItem = true;
                     }
 
-                    if (ok)
+                    if (stockpileContainsBuildItem)
                     {
                         if (foundTypeIndex != ColonyBuiltIn.ItemTypes.AIR.Id && foundTypeIndex != ColonyBuiltIn.ItemTypes.WATER.Id)
                         {
@@ -102,7 +105,9 @@ namespace Pandaros.Settlers.Jobs.Construction
                                 ownerStockPile.Add(foundItem.OnRemoveItems.Select(itm => itm.item).ToList());
                         }
 
-                        if (ServerManager.TryChangeBlock(iterationType.CurrentPosition, foundTypeIndex, buildType.ItemIndex, areaJob.Owner, ESetBlockFlags.DefaultAudio) == EServerChangeBlockResult.Success)
+                        var changeResult = ServerManager.TryChangeBlock(iterationType.CurrentPosition, buildType.ItemIndex, new BlockChangeRequestOrigin(job.Owner), ESetBlockFlags.DefaultAudio);
+
+                        if (changeResult == EServerChangeBlockResult.Success)
                         {
                             if (buildType.ItemIndex != ColonyBuiltIn.ItemTypes.AIR.Id)
                             {
@@ -113,17 +118,25 @@ namespace Pandaros.Settlers.Jobs.Construction
                                 }
 
                                 ownerStockPile.TryRemove(buildType.ItemIndex);
+
+                                if (buildType.Name.Contains("bed"))
+                                    ownerStockPile.TryRemove(ItemId.GetItemId("bed"));
                             }
                         }
-                        else
+                        else if (changeResult != EServerChangeBlockResult.CancelledByCallback)
                         {
                             if (!_needsChunkLoaded.Contains(bpi))
                                 _needsChunkLoaded.Add(bpi);
 
-                            state.SetIndicator(new Shared.IndicatorState(5f, ColonyBuiltIn.ItemTypes.ERRORIDLE.Name));
-                            ChunkQueue.QueuePlayerSurrounding(iterationType.CurrentPosition);
+                            state.SetIndicator(new Shared.IndicatorState(5f, buildType.Name));
+                            ChunkQueue.QueuePlayerSurrounding(iterationType.CurrentPosition.ToChunk());
                             return;
                         }
+                    }
+                    else
+                    {
+                        state.SetIndicator(new Shared.IndicatorState(5f, buildType.Name, true, false));
+                        return;
                     }
                 }
                 else
@@ -131,8 +144,8 @@ namespace Pandaros.Settlers.Jobs.Construction
                     if (!_needsChunkLoaded.Contains(bpi))
                         _needsChunkLoaded.Add(bpi);
 
+                    ChunkQueue.QueuePlayerSurrounding(iterationType.CurrentPosition.ToChunk());
                     state.SetIndicator(new Shared.IndicatorState(5f, ColonyBuiltIn.ItemTypes.ERRORIDLE.Name));
-                    ChunkQueue.QueuePlayerSurrounding(iterationType.CurrentPosition);
                     return;
                 }
 
@@ -171,7 +184,7 @@ namespace Pandaros.Settlers.Jobs.Construction
                 // failed to find next position to do job at, self-destruct
                 state.SetIndicator(new Shared.IndicatorState(5f, ColonyBuiltIn.ItemTypes.ERRORIDLE.Name));
                 AreaJobTracker.RemoveJob(areaJob);
-                PandaLogger.Log(ChatColor.yellow, "Failed to MoveNext after while. Iterator position: {0}.", iterationType.CurrentPosition);
+                SettlersLogger.Log(ChatColor.yellow, "Failed to MoveNext after while. Iterator position: {0}.", iterationType.CurrentPosition);
                 return;
             }
         }

@@ -1,14 +1,12 @@
-﻿using BlockTypes;
-using Jobs;
+﻿using Jobs;
 using NPC;
-using Pandaros.Settlers.Items;
-using Pandaros.Settlers.Models;
-using Pandaros.Settlers.Research;
-using Pipliz.JSON;
+using Pandaros.API;
+using Pandaros.API.Items;
+using Pandaros.API.Models;
+using Pandaros.API.Research;
 using Recipes;
 using Science;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using UnityEngine;
 
 namespace Pandaros.Settlers.Jobs
@@ -23,8 +21,7 @@ namespace Pandaros.Settlers.Jobs
                 0,
                 new List<InventoryItem>()
                 {
-                    new InventoryItem(ColonyBuiltIn.ItemTypes.SCIENCEBAGLIFE.Id, 4),
-                    new InventoryItem(ColonyBuiltIn.ItemTypes.SCIENCEBAGADVANCED.Id, 2)
+                    new InventoryItem(ColonyBuiltIn.ItemTypes.SCIENCEBAGLIFE.Id, 4)
                 }
             }
         };
@@ -35,7 +32,7 @@ namespace Pandaros.Settlers.Jobs
                 0,
                 new List<IResearchableCondition>()
                 {
-                    new HappinessCondition() { Threshold = 75 }
+                    new HappinessCondition() { Threshold = 50 }
                 }
             }
         };
@@ -47,7 +44,8 @@ namespace Pandaros.Settlers.Jobs
                 new List<string>()
                 {
                     ColonyBuiltIn.Research.HERBFARMING,
-                    ColonyBuiltIn.Research.FLAXFARMING
+                    ColonyBuiltIn.Research.FLAXFARMING,
+                    ColonyBuiltIn.Research.SCIENCEBAGLIFE
                 }
             }
         };
@@ -58,7 +56,8 @@ namespace Pandaros.Settlers.Jobs
                 1,
                 new List<RecipeUnlock>()
                 {
-                    new RecipeUnlock(ApothecaryRegister.JOB_ITEM_KEY, ERecipeUnlockType.Recipe)
+                    new RecipeUnlock(ApothecaryRegister.JOB_ITEM_KEY, ERecipeUnlockType.Recipe),
+                    new RecipeUnlock(SettlersBuiltIn.ItemTypes.BANDAGE, ERecipeUnlockType.Recipe)
                 }
             }
         };
@@ -106,7 +105,7 @@ namespace Pandaros.Settlers.Jobs
                 0,
                 new List<IResearchableCondition>()
                 {
-                    new HappinessCondition() { Threshold = 75 }
+                    new HappinessCondition() { Threshold = 60 }
                 }
             }
         };
@@ -117,7 +116,8 @@ namespace Pandaros.Settlers.Jobs
                 0,
                 new List<string>()
                 {
-                    SettlersBuiltIn.Research.APOTHECARIES1
+                    SettlersBuiltIn.Research.APOTHECARIES1,
+                    ColonyBuiltIn.Research.SCIENCEBAGADVANCED
                 }
             }
         };

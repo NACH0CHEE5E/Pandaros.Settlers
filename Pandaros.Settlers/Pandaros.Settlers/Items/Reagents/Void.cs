@@ -1,6 +1,5 @@
 ﻿using Jobs;
-using Pandaros.Settlers.Entities;
-using Pandaros.Settlers.Jobs;
+using Pandaros.API.Entities;
 using Pipliz;
 using Pipliz.JSON;
 using Recipes;
@@ -36,17 +35,13 @@ namespace Pandaros.Settlers.Items
         {
             if (recipe.Name == Elementium.Item.name && job.NPC != null)
             {
-                var inv    = SettlerInventory.GetSettlerInventory(job.NPC);
+                var inv    = ColonistInventory.Get(job.NPC);
                 var chance = 0.05f + inv.GetSkillModifier();
 
                 if (Random.NextFloat() <= chance)
                 {
                     inv.AddBonusProc(Item.ItemIndex);
                     results.Add(new RecipeResult(Item.ItemIndex));
-
-                    PandaChat.Send(job.NPC.Colony,
-                                   $"{inv.SettlerName} the Apothecary has discovered a Void Stone while crafting Elementium!",
-                                   ChatColor.orange);
                 }
             }
         }

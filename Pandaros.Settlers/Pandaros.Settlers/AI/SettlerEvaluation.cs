@@ -1,8 +1,8 @@
-﻿using System;
-using NPC;
+﻿using Pandaros.API;
+using Pandaros.API.Entities;
 using Pandaros.Settlers.ColonyManagement;
-using Pandaros.Settlers.Entities;
 using Pipliz;
+using System;
 
 namespace Pandaros.Settlers.AI
 {
@@ -11,26 +11,28 @@ namespace Pandaros.Settlers.AI
         public static float SpawnChance(ColonyState state)
         {
             var chance        = .3f;
-            var remainingBeds = ServerManager.BlockEntityTracker.BedTracker.CalculateBedCount(state.ColonyRef) - state.ColonyRef.FollowerCount;
+            var remainingBeds = state.ColonyRef.BedTracker.CalculateTotalBedCount() - state.ColonyRef.FollowerCount;
 
             if (remainingBeds < 1)
                 chance -= 0.1f;
 
-            if (remainingBeds >= state.MaxPerSpawn)
+            if (remainingBeds >= SettlerManager.MaxPerSpawn(state.ColonyRef))
                 chance += 0.3f;
             else if (remainingBeds > SettlerManager.MIN_PERSPAWN)
                 chance += 0.15f;
 
             var jobCount = state.ColonyRef.JobFinder.OpenJobCount;
 
-            if (jobCount > state.MaxPerSpawn)
+            if (jobCount > SettlerManager.MaxPerSpawn(state.ColonyRef))
                 chance += 0.4f;
             else if (jobCount > SettlerManager.MIN_PERSPAWN)
                 chance += 0.1f;
             else
                 chance -= 0.2f;
 
-            if (state.Difficulty != GameDifficulty.Easy && state.Difficulty != GameDifficulty.Normal)
+            chance += SettlerChance.GetSettlerChance(state.ColonyRef);
+
+            if (state.Difficulty != GameDifficulty.Normal)
                 if (state.ColonyRef.InSiegeMode ||
                     state.ColonyRef.LastSiegeModeSpawn != 0 &&
                     Time.SecondsSinceStartDouble - state.ColonyRef.LastSiegeModeSpawn > TimeSpan.FromMinutes(5).TotalSeconds)

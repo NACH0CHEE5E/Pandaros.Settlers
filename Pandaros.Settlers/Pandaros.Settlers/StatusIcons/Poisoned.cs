@@ -1,4 +1,4 @@
-﻿using Pandaros.Settlers.Items;
+﻿using Pandaros.API.Models;
 
 namespace Pandaros.Settlers.StatusIcons
 {

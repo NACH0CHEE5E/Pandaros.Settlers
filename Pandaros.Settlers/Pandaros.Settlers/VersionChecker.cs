@@ -1,6 +1,8 @@
 ﻿using Chatting;
 using ICSharpCode.SharpZipLib.Zip;
 using Newtonsoft.Json;
+using Pandaros.API;
+using Pandaros.API.localization;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,6 +19,8 @@ namespace Pandaros.Settlers
         public const SslProtocols _Tls12 = (SslProtocols)0x00000C00;
         public const SecurityProtocolType Tls12 = (SecurityProtocolType)_Tls12;
         internal static bool NewVer;
+        private static LocalizationHelper _localizationHelper = new LocalizationHelper(GameLoader.NAMESPACE, "Version");
+
 
         static VersionChecker()
         {
@@ -60,8 +64,8 @@ namespace Pandaros.Settlers
             }
             catch (Exception ex)
             {
-                PandaLogger.Log(ChatColor.yellow, "There was a error getting the server version to check for an update. Unable to check if there is an update to the mod.");
-                PandaLogger.LogToFile(ex.Message);
+                SettlersLogger.Log(ChatColor.yellow, "There was a error getting the server version to check for an update. Unable to check if there is an update to the mod.");
+                SettlersLogger.LogToFile(ex.Message);
             }
 
             return releases;
@@ -84,7 +88,7 @@ namespace Pandaros.Settlers
                     break;
                 }
 
-                PandaLogger.Log("Current Github Version: " + githubRelease.name);
+                SettlersLogger.Log("Current Github Version: " + githubRelease.name);
                 version = new Version(githubRelease.name);
             }
 
@@ -98,14 +102,14 @@ namespace Pandaros.Settlers
                 var gitVer = GetGitVerion();
                 var bkFolder = GameLoader.GAMEDATA_FOLDER + "Pandaros.bk";
 
-                PandaLogger.Log(ChatColor.green, "Mod version: {0}.", GameLoader.MOD_VER.ToString());
-                PandaLogger.Log(ChatColor.green, "Git version: {0}.", gitVer.ToString());
+                SettlersLogger.Log(ChatColor.green, "Mod version: {0}.", GameLoader.MOD_VER.ToString());
+                SettlersLogger.Log(ChatColor.green, "Git version: {0}.", gitVer.ToString());
 
                 var versionCompare = GameLoader.MOD_VER.CompareTo(gitVer);
 
                 if (versionCompare < 0)
                 {
-                    PandaLogger.Log(ChatColor.red, "Settlers! version is out of date. Downloading new version from: {0}",
+                    SettlersLogger.Log(ChatColor.red, "Settlers! version is out of date. Downloading new version from: {0}",
                                     GIT_URL);
 
                     var releases = JsonConvert.DeserializeObject<List<GithubRelease>>(GetReleases());
@@ -146,7 +150,7 @@ namespace Pandaros.Settlers
                                 if (Directory.Exists(bkFolder))
                                     Directory.Delete(bkFolder, true);
 
-                                PandaLogger.Log(ChatColor.green,
+                                SettlersLogger.Log(ChatColor.green,
                                                 $"Settlers! update {gitVer} downloaded. Making a backup..");
 
                                 Directory.Move(GameLoader.MODS_FOLDER + "/Pandaros", bkFolder);
@@ -154,7 +158,7 @@ namespace Pandaros.Settlers
                                 if (File.Exists(oldVer))
                                     File.Delete(oldVer);
 
-                                PandaLogger.Log(ChatColor.green, $"Installing...");
+                                SettlersLogger.Log(ChatColor.green, $"Installing...");
 
                                 try
                                 {
@@ -168,19 +172,16 @@ namespace Pandaros.Settlers
                                     if (Directory.Exists(bkFolder))
                                         Directory.Move(bkFolder, GameLoader.MODS_FOLDER + "/Pandaros");
 
-                                    PandaLogger.LogError(ex);
+                                    SettlersLogger.LogError(ex);
 
-                                    PandaLogger.Log(ChatColor.red,
+                                    SettlersLogger.Log(ChatColor.red,
                                                     $"There was an error updating to the latest version of Settlers!");
                                 }
 
                                 if (!error)
                                 {
-                                    PandaLogger.Log(ChatColor.green,
-                                                    $"Settlers! update {gitVer} installed. Restart to update!");
-
-                                    PandaChat.SendToAll($"Settlers! update {gitVer} installed. Restart server to update!",
-                                                        ChatColor.maroon, ChatStyle.bolditalic);
+                                    SettlersLogger.Log(ChatColor.green, $"Settlers! update {gitVer} installed. Restart to update!");
+                                    PandaChat.SendToAll("UpdateInstalled", _localizationHelper, gitVer.ToString());
                                 }
                             }
                             catch (Exception)
@@ -204,6 +205,7 @@ namespace Pandaros.Settlers
 
     public class VersionChatCommand : IChatCommand
     {
+        private static LocalizationHelper _localizationHelper = new LocalizationHelper(GameLoader.NAMESPACE, "Version");
 
         public bool TryDoCommand(Players.Player player, string chat, List<string> split)
         {
@@ -215,22 +217,20 @@ namespace Pandaros.Settlers
             var gitVer = VersionChecker.GetGitVerion();
             var versionCompare = GameLoader.MOD_VER.Major.CompareTo(gitVer.Major);
 
-            PandaChat.Send(player, "Settlers! Mod version: {0}.", ChatColor.green, GameLoader.MOD_VER.ToString());
-            PandaChat.Send(player, "Settlers! Git version: {0}.", ChatColor.green, gitVer.ToString());
+            PandaChat.Send(player, _localizationHelper, "ModVersion", ChatColor.green, GameLoader.MOD_VER.ToString());
+            PandaChat.Send(player, _localizationHelper, "GitVersion", ChatColor.green, gitVer.ToString());
 
             if (versionCompare < 0)
             {
                 if (!VersionChecker.NewVer)
                 {
-                    PandaChat.Send(player, "Settlers! version is out of date. The mod will automatically update now.",
-                                   ChatColor.red);
+                    PandaChat.Send(player, _localizationHelper, "VersionOutOfDate", ChatColor.red);
 
                     VersionChecker.WriteVersionsToConsole();
                 }
                 else
                 {
-                    PandaChat.Send(player, "Settlers! Has been updated. Restart the server/game to apply.",
-                                   ChatColor.red);
+                    PandaChat.Send(player, _localizationHelper, "RestartRequired", ChatColor.red);
                 }
             }
 

@@ -1,10 +1,10 @@
-﻿using MeshedObjects;
-using Pandaros.Settlers.Entities;
+﻿using Pandaros.API;
+using Pandaros.API.Entities;
+using Pandaros.API.Jobs.Roaming;
+using Pandaros.API.Models;
+using Pandaros.API.Monsters;
+using Pandaros.API.Server;
 using Pandaros.Settlers.Jobs;
-using Pandaros.Settlers.Jobs.Roaming;
-using Pandaros.Settlers.Models;
-using Pandaros.Settlers.Monsters;
-using Pandaros.Settlers.Server;
 using Pipliz;
 using Pipliz.JSON;
 using Recipes;
@@ -17,8 +17,8 @@ namespace Pandaros.Settlers.Items.Machines
 {
     public class GateLeverRegister : IRoamingJobObjective
     {
-        public string name => nameof(GateLever);
         public float WorkTime => 4;
+        public float WatchArea => 21;
         public ItemId ItemIndex => ItemId.GetItemId(GateLever.Item.ItemIndex);
         public Dictionary<string, IRoamingJobObjectiveAction> ActionCallbacks { get; } = new Dictionary<string, IRoamingJobObjectiveAction>()
         {
@@ -38,7 +38,7 @@ namespace Pandaros.Settlers.Items.Machines
     public class RepairGateLever : IRoamingJobObjectiveAction
     {
         public string name => MachineConstants.REPAIR;
-
+        public float ActionEnergyMinForFix => .5f;
         public float TimeToPreformAction => 10;
 
         public string AudioKey => GameLoader.NAMESPACE + ".HammerAudio";
@@ -54,7 +54,7 @@ namespace Pandaros.Settlers.Items.Machines
     public class ReloadGateLever : IRoamingJobObjectiveAction
     {
         public string name => MachineConstants.RELOAD;
-
+        public float ActionEnergyMinForFix => .5f;
         public float TimeToPreformAction => 5;
 
         public string AudioKey => GameLoader.NAMESPACE + ".ReloadingAudio";
@@ -157,7 +157,6 @@ namespace Pandaros.Settlers.Items.Machines
 
         public static void DoWork(Colony colony, RoamingJobState machineState)
         {
-            if (!colony.OwnerIsOnline() && SettlersConfiguration.OfflineColonies || colony.OwnerIsOnline())
                 if (machineState.GetActionEnergy(MachineConstants.REPAIR) > 0 &&
                     machineState.GetActionEnergy(MachineConstants.RELOAD) > 0 &&
                     machineState.GetActionEnergy(MachineConstants.REFUEL) > 0 &&
@@ -402,7 +401,7 @@ namespace Pandaros.Settlers.Items.Machines
                                         planks
                                     },
                                     new RecipeResult(Item.ItemIndex),
-                                    5);
+                                    5, 0, -100);
 
             ServerManager.RecipeStorage.AddLimitTypeRecipe(AdvancedCrafterRegister.JOB_NAME, recipe);
             ServerManager.RecipeStorage.AddScienceRequirement(recipe);
@@ -410,7 +409,7 @@ namespace Pandaros.Settlers.Items.Machines
             var gate = new Recipe(GateItem.name,
                                   new List<InventoryItem> {iron, rivets, tools},
                                   new RecipeResult(GateItem.ItemIndex),
-                                  24);
+                                  24, 0, -100);
 
             ServerManager.RecipeStorage.AddLimitTypeRecipe(AdvancedCrafterRegister.JOB_NAME, gate);
             ServerManager.RecipeStorage.AddScienceRequirement(gate);

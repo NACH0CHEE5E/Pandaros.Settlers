@@ -1,7 +1,9 @@
 ﻿using AI;
 using Monsters;
 using NPC;
-using Pandaros.Settlers.Entities;
+using Pandaros.API;
+using Pandaros.API.Entities;
+using Pandaros.API.Monsters;
 using Pipliz.JSON;
 using System.Collections.Generic;
 
@@ -29,7 +31,7 @@ namespace Pandaros.Settlers.Monsters.Bosses
             CurrentHealth = _totalHealth;
         }
 
-        public IPandaBoss GetNewBoss(Path path, Colony p)
+        public IPandaZombie GetNewInstance(Path path, Colony p)
         {
             return new Juggernaut(path, p);
         }
@@ -38,7 +40,7 @@ namespace Pandaros.Settlers.Monsters.Bosses
         public string DeathText => "Juggernaut want to smash.....";
         public string name => "Juggernaut";
         public override float TotalHealth => _totalHealth;
-
+        public int MinColonists => 150;
         public bool KilledBefore
         {
             get => killedBefore;
@@ -48,8 +50,7 @@ namespace Pandaros.Settlers.Monsters.Bosses
         public string AnnouncementAudio => GameLoader.NAMESPACE + ".ZombieAudio";
         public float ZombieMultiplier => 1f;
         public float ZombieHPBonus => 50;
-
-        public string LootTableName => BossLoot.LootTableName;
+        public string MosterType => "Boss";
 
         public Dictionary<DamageType, float> Damage { get; } = new Dictionary<DamageType, float>
         {

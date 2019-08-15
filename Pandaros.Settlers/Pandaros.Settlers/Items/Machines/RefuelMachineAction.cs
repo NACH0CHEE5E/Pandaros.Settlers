@@ -1,6 +1,6 @@
-﻿using BlockTypes;
-using Pandaros.Settlers.Jobs.Roaming;
-using Pandaros.Settlers.Models;
+﻿using Pandaros.API;
+using Pandaros.API.Jobs.Roaming;
+using Pandaros.API.Models;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -23,7 +23,7 @@ namespace Pandaros.Settlers.Items.Machines
         }
 
         public string name => MachineConstants.REFUEL;
-
+        public float ActionEnergyMinForFix => .5f;
         public float TimeToPreformAction => 4;
 
         public string AudioKey => GameLoader.NAMESPACE + ".ReloadingAudio";
@@ -32,25 +32,22 @@ namespace Pandaros.Settlers.Items.Machines
 
         public ItemId PreformAction(Colony colony, RoamingJobState machineState)
         {
-            if (!colony.OwnerIsOnline() && SettlersConfiguration.OfflineColonies || colony.OwnerIsOnline())
+            if (machineState.GetActionEnergy(MachineConstants.REFUEL) < .75f)
             {
-                if (machineState.GetActionEnergy(MachineConstants.REFUEL) < .75f)
-                {
-                    var stockpile = colony.Stockpile;
+                var stockpile = colony.Stockpile;
 
-                    foreach (var item in FuelValues)
-                        while ((stockpile.AmountContained(item.Key) > 100 ||
-                                item.Key == ColonyBuiltIn.ItemTypes.FIREWOOD ||
-                                item.Key == ColonyBuiltIn.ItemTypes.COALORE) &&
-                                machineState.GetActionEnergy(MachineConstants.REFUEL) < RoamingJobState.GetActionsMaxEnergy(MachineConstants.REFUEL, colony, MachineConstants.MECHANICAL))
-                        {
-                            stockpile.TryRemove(item.Key);
-                            machineState.AddToActionEmergy(MachineConstants.REFUEL, item.Value);
-                        }
+                foreach (var item in FuelValues)
+                    while ((stockpile.AmountContained(item.Key) > 100 ||
+                            item.Key == ColonyBuiltIn.ItemTypes.FIREWOOD ||
+                            item.Key == ColonyBuiltIn.ItemTypes.COALORE) &&
+                            machineState.GetActionEnergy(MachineConstants.REFUEL) < RoamingJobState.GetActionsMaxEnergy(MachineConstants.REFUEL, colony, MachineConstants.MECHANICAL))
+                    {
+                        stockpile.TryRemove(item.Key);
+                        machineState.AddToActionEmergy(MachineConstants.REFUEL, item.Value);
+                    }
 
-                    if (machineState.GetActionEnergy(MachineConstants.REFUEL) < RoamingJobState.GetActionsMaxEnergy(MachineConstants.REFUEL, colony, MachineConstants.MECHANICAL))
-                        return FuelValues.First().Key;
-                }
+                if (machineState.GetActionEnergy(MachineConstants.REFUEL) < RoamingJobState.GetActionsMaxEnergy(MachineConstants.REFUEL, colony, MachineConstants.MECHANICAL))
+                    return FuelValues.First().Key;
             }
 
             return ObjectiveLoadEmptyIcon;
